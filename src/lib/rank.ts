@@ -2,6 +2,7 @@ import { sql, ensureSchema } from "./db";
 import { config } from "./config";
 import { distanceMiles } from "./distance";
 import { summarizeForHour, type HourlyForecast, type WeatherSummary } from "./weather";
+import { parseScheduleLabel } from "./schedule";
 import type { Indoorness, Registration } from "./types";
 
 export interface DbEventRow {
@@ -151,6 +152,39 @@ export function rank(events: DbEventRow[], input: RankInput): RankedEvent[] {
       const startHour = start.getHours();
       // Toddler nap penalty (12-2pm)
       if (input.childAgeMonths < 36 && startHour >= 12 && startHour < 14) {
+        score -= 0.2;
+        reasons.push("during typical nap window");
+      }
+    } else if (e.source_id === "cityRec" && e.schedule_label) {
+      // Recurring class series: nudge by today's weekday + meeting time.
+      const sched = parseScheduleLabel(e.schedule_label);
+      const todayDow = input.at.getDay();
+      if (sched.days.length > 0) {
+        if (sched.days.includes(todayDow)) {
+          score += 0.25;
+          reasons.push("meets today");
+        } else {
+          // Find next meeting day distance.
+          const ahead = sched.days
+            .map((d) => (d - todayDow + 7) % 7)
+            .filter((n) => n > 0)
+            .sort((a, b) => a - b)[0];
+          if (ahead === 1) {
+            score += 0.05;
+            reasons.push("meets tomorrow");
+          } else if (typeof ahead === "number") {
+            score -= 0.1;
+            reasons.push(`next meeting in ${ahead}d`);
+          }
+        }
+      }
+      // Nap-window penalty using the actual meeting start time.
+      if (
+        input.childAgeMonths < 36 &&
+        sched.startMinutes !== null &&
+        sched.startMinutes >= 12 * 60 &&
+        sched.startMinutes < 14 * 60
+      ) {
         score -= 0.2;
         reasons.push("during typical nap window");
       }

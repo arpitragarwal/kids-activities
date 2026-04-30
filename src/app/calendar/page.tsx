@@ -3,6 +3,7 @@ import { formatInTimeZone } from "date-fns-tz";
 import { fetchEventsBetween, rank } from "@/lib/rank";
 import { getCachedWeather } from "@/lib/weather";
 import { getEffectiveConfig } from "@/lib/userPrefs";
+import { parseScheduleLabel } from "@/lib/schedule";
 import { EventCard } from "@/components/EventCard";
 
 export const dynamic = "force-dynamic";
@@ -25,23 +26,39 @@ export default async function CalendarPage() {
     home: cfg.home,
   });
 
-  // Bucket by day. Evergreen entries appear under "Anytime".
+  // Bucket by day. One-off events (library) go to their date. Class series
+  // (cityRec evergreen with a parseable schedule) get distributed across each
+  // matching weekday in the window. Parks + unparseable evergreens fall under
+  // "Anytime".
   const days: Record<string, typeof ranked> = { Anytime: [] };
   const dayKeys: string[] = [];
+  const dayDates: Date[] = [];
   for (let i = 0; i < 7; i++) {
     const d = addDays(start, i);
     const k = formatInTimeZone(d, cfg.timezone, "EEE MMM d");
     days[k] = [];
     dayKeys.push(k);
+    dayDates.push(d);
   }
 
   for (const e of ranked) {
-    if (e.evergreen) {
-      days["Anytime"].push(e);
+    if (!e.evergreen) {
+      const k = formatInTimeZone(new Date(e.start_at), cfg.timezone, "EEE MMM d");
+      if (days[k]) days[k].push(e);
       continue;
     }
-    const k = formatInTimeZone(new Date(e.start_at), cfg.timezone, "EEE MMM d");
-    if (days[k]) days[k].push(e);
+    if (e.source_id === "cityRec" && e.schedule_label) {
+      const sched = parseScheduleLabel(e.schedule_label);
+      if (sched.days.length > 0) {
+        for (let i = 0; i < dayDates.length; i++) {
+          if (sched.days.includes(dayDates[i].getDay())) {
+            days[dayKeys[i]].push(e);
+          }
+        }
+        continue;
+      }
+    }
+    days["Anytime"].push(e);
   }
 
   return (

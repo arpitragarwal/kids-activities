@@ -3,6 +3,7 @@ import { fetchEventsBetween, rank } from "@/lib/rank";
 import { getCachedWeather } from "@/lib/weather";
 import { getSourceHealth } from "@/lib/sources";
 import { getEffectiveConfig } from "@/lib/userPrefs";
+import { meetsOn } from "@/lib/schedule";
 import { EventCard } from "@/components/EventCard";
 import { WeatherBanner } from "@/components/WeatherBanner";
 import { SettingsBar } from "@/components/SettingsBar";
@@ -31,7 +32,13 @@ export default async function HomePage({
     childAgeMonths: cfg.child.ageMonths,
     home: cfg.home,
   });
-  const top = ranked.slice(0, 12);
+  // Today view only — drop class series whose meeting days don't include today.
+  // (Calendar view keeps them, distributed across their meeting days.)
+  const todayDow = now.getDay();
+  const todayPicks = ranked.filter(
+    (e) => !(e.source_id === "cityRec" && e.evergreen) || meetsOn(e.schedule_label, todayDow),
+  );
+  const top = todayPicks.slice(0, 12);
 
   const broken = health.filter((h) => h.status === "broken" || h.status === "stale");
 
