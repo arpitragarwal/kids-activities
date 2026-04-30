@@ -54,11 +54,19 @@ export function EventCard({ event }: { event: RankedEvent }) {
   if (event.evergreen && event.source_id === "parks") {
     timingPrimary = "Open anytime";
   } else if (event.evergreen && event.source_id === "cityRec") {
-    // Series: show date range.
-    timingPrimary = end
-      ? `${fmt(start, "MMM d")} – ${fmt(end, "MMM d")}`
-      : `Starts ${fmt(start, "MMM d")}`;
-    timingSecondary = "Multi-session class";
+    // Series: prefer the meeting pattern (e.g. "Sun · 9:00–9:30 AM"); date range
+    // becomes secondary.
+    if (event.schedule_label) {
+      timingPrimary = event.schedule_label;
+      timingSecondary = end
+        ? `${fmt(start, "MMM d")} – ${fmt(end, "MMM d")}`
+        : `From ${fmt(start, "MMM d")}`;
+    } else {
+      timingPrimary = end
+        ? `${fmt(start, "MMM d")} – ${fmt(end, "MMM d")}`
+        : `Starts ${fmt(start, "MMM d")}`;
+      timingSecondary = "Multi-session class";
+    }
   } else {
     // Single-occurrence (library) — show day + start/end times.
     timingPrimary = end

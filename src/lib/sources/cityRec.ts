@@ -3,6 +3,92 @@ import type { SourceDefinition, NormalizedEvent } from "../types";
 const API_URL =
   "https://anc.apm.activecommunities.com/mountainviewrecreation/rest/activities/list?locale=en-US";
 
+const DETAIL_DATES_URL = (id: number) =>
+  `https://anc.apm.activecommunities.com/mountainviewrecreation/rest/activity/detail/meetingandregistrationdates/${id}?locale=en-US`;
+
+interface PatternDate {
+  weekdays: string;
+  starting_time: string; // HH:mm:ss
+  ending_time: string;
+}
+interface ActivityPattern {
+  beginning_date: string;
+  ending_date: string;
+  pattern_dates: PatternDate[];
+}
+interface MeetingAndRegDates {
+  activity_patterns: ActivityPattern[];
+  no_meeting_dates: boolean;
+}
+
+const DAY_ORDER = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+
+function fmtTime(hms: string): string {
+  // "09:00:00" -> "9:00 AM"
+  const [h, m] = hms.split(":").map(Number);
+  const period = h >= 12 ? "PM" : "AM";
+  const h12 = h % 12 || 12;
+  return m === 0 ? `${h12} ${period}` : `${h12}:${m.toString().padStart(2, "0")} ${period}`;
+}
+
+function buildScheduleLabel(data: MeetingAndRegDates | null): string | null {
+  if (!data || data.no_meeting_dates) return null;
+  const allPatterns = data.activity_patterns?.flatMap((p) => p.pattern_dates) ?? [];
+  if (allPatterns.length === 0) return null;
+
+  // Group patterns by start/end time, then list days.
+  const byTime = new Map<string, Set<string>>();
+  for (const p of allPatterns) {
+    const key = `${p.starting_time}|${p.ending_time}`;
+    if (!byTime.has(key)) byTime.set(key, new Set());
+    byTime.get(key)!.add(p.weekdays);
+  }
+  const parts: string[] = [];
+  for (const [key, days] of byTime) {
+    const [startT, endT] = key.split("|");
+    const sortedDays = [...days].sort(
+      (a, b) => DAY_ORDER.indexOf(a) - DAY_ORDER.indexOf(b),
+    );
+    parts.push(`${sortedDays.join(", ")} · ${fmtTime(startT)}–${fmtTime(endT)}`);
+  }
+  return parts.join(" / ");
+}
+
+async function fetchScheduleLabel(id: number): Promise<string | null> {
+  try {
+    const res = await fetch(DETAIL_DATES_URL(id), {
+      headers: { Accept: "application/json", "User-Agent": "mv-kids" },
+      cache: "no-store",
+    });
+    if (!res.ok) return null;
+    const json = (await res.json()) as {
+      body?: { meeting_and_registration_dates?: MeetingAndRegDates };
+    };
+    return buildScheduleLabel(json.body?.meeting_and_registration_dates ?? null);
+  } catch {
+    return null;
+  }
+}
+
+// Run promise-producing tasks with bounded concurrency.
+async function pMap<T, R>(
+  items: T[],
+  concurrency: number,
+  fn: (item: T, i: number) => Promise<R>,
+): Promise<R[]> {
+  const results: R[] = new Array(items.length);
+  let idx = 0;
+  async function worker() {
+    while (true) {
+      const i = idx++;
+      if (i >= items.length) break;
+      results[i] = await fn(items[i], i);
+    }
+  }
+  await Promise.all(Array.from({ length: Math.min(concurrency, items.length) }, worker));
+  return results;
+}
+
 interface ActivityItem {
   id: number;
   name: string;
@@ -114,28 +200,32 @@ export const cityRecSource: SourceDefinition = {
       page++;
     }
 
-    const events: NormalizedEvent[] = [];
+    // Filter and prepare in two passes — first decide which we keep, then fan
+    // out a parallel detail-fetch for the meeting times.
     const now = Date.now();
-    for (const a of allItems) {
-      // Filter to actual kids 0-5.
+    const kept = allItems.filter((a) => {
       const ageMin = monthsFromYM(a.age_min_year ?? 0, a.age_min_month ?? 0);
-      const ageMax = monthsFromYM(a.age_max_year ?? 0, a.age_max_month ?? 0);
-      if (ageMin > 60) continue; // start age >5yrs
-
-      // Skip activities with missing/unparseable dates — ActiveNet sometimes
-      // returns blank date_range_* on drop-ins or always-open programs.
-      if (!a.date_range_start || !a.date_range_end) continue;
+      if (ageMin > 60) return false;
+      if (!a.date_range_start || !a.date_range_end) return false;
       const end = new Date(a.date_range_end + "T23:59:59-08:00");
       const start = new Date(a.date_range_start + "T09:00:00-08:00");
-      if (Number.isNaN(end.getTime()) || Number.isNaN(start.getTime())) continue;
-      if (end.getTime() < now) continue;
+      if (Number.isNaN(end.getTime()) || Number.isNaN(start.getTime())) return false;
+      if (end.getTime() < now) return false;
+      return true;
+    });
+
+    // Fetch meeting times in parallel batches. Concurrency cap of 8 keeps load
+    // off ActiveNet; 60s cap on overall fan-out via Promise.race.
+    const labels = await pMap(kept, 8, (a) => fetchScheduleLabel(a.id));
+
+    const events: NormalizedEvent[] = kept.map((a, i) => {
+      const ageMin = monthsFromYM(a.age_min_year ?? 0, a.age_min_month ?? 0);
+      const ageMax = monthsFromYM(a.age_max_year ?? 0, a.age_max_month ?? 0);
+      const end = new Date(a.date_range_end + "T23:59:59-08:00");
+      const start = new Date(a.date_range_start + "T09:00:00-08:00");
       const venue = a.location?.label ?? "";
       const { lat, lng } = coordsForVenue(venue);
-      // Strip HTML from desc.
       const desc = a.desc.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim().slice(0, 800);
-
-      // Cost: prefer numeric search_from_price; otherwise mark "paid" since these
-      // recreation classes generally have a fee.
       const cost: string =
         typeof a.search_from_price === "number" && a.search_from_price > 0
           ? `$${a.search_from_price}+`
@@ -143,10 +233,7 @@ export const cityRecSource: SourceDefinition = {
           ? "free"
           : "paid";
 
-      // ActiveNet activities are series, not one-off events. Treat as evergreen
-      // (rank surfaces them whenever within date range), but anchor startAt to
-      // series start for sorting.
-      events.push({
+      return {
         sourceId: "cityRec",
         externalId: String(a.id),
         title: a.name,
@@ -165,10 +252,11 @@ export const cityRecSource: SourceDefinition = {
           : "indoor",
         cost,
         registration: a.allow_drop_in_reg ? "drop-in" : "required",
+        scheduleLabel: labels[i],
         url: a.detail_url,
         evergreen: true,
-      });
-    }
+      };
+    });
     return { events };
   },
 };

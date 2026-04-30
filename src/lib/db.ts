@@ -51,6 +51,7 @@ export async function ensureSchema(): Promise<void> {
     // Additive migrations — safe to re-run.
     await sql`ALTER TABLE events ADD COLUMN IF NOT EXISTS cost TEXT NOT NULL DEFAULT 'unknown'`;
     await sql`ALTER TABLE events ADD COLUMN IF NOT EXISTS registration TEXT NOT NULL DEFAULT 'unknown'`;
+    await sql`ALTER TABLE events ADD COLUMN IF NOT EXISTS schedule_label TEXT`;
     await sql`
       CREATE TABLE IF NOT EXISTS weather_cache (
         lat DOUBLE PRECISION NOT NULL,

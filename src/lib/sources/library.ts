@@ -116,6 +116,7 @@ export const librarySource: SourceDefinition = {
         indoorness: (isOffsite ? "outdoor" : "indoor") as Indoorness,
         cost: "free",
         registration: needsSignup ? "required" : "walk-in",
+        scheduleLabel: null,
         url: (vAny.url as string | undefined) ?? null,
         evergreen: false,
       });

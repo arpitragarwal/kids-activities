@@ -140,6 +140,7 @@ export const parksSource: SourceDefinition = {
       indoorness: p.indoorness,
       cost: "free",
       registration: "walk-in",
+      scheduleLabel: null,
       url: p.url ?? null,
       evergreen: true,
       raw: { tags: p.tags },

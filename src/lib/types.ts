@@ -20,6 +20,8 @@ export interface NormalizedEvent {
   indoorness: Indoorness;
   cost: Cost;
   registration: Registration;
+  /** Human-readable meeting pattern, e.g. "Sun · 9:00–9:30 AM". Null when unknown. */
+  scheduleLabel: string | null;
   url: string | null;
   evergreen: boolean; // true for parks/places without scheduled times
   raw?: unknown;
