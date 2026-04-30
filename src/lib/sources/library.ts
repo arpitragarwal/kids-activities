@@ -95,6 +95,12 @@ export const librarySource: SourceDefinition = {
       const location = (vAny.location as string | undefined) ?? "MV Public Library";
       const isOffsite = /offsite|park|magical bridge/i.test(location + " " + desc);
 
+      // Library programs are free. Detect signup language to flag registration.
+      const needsSignup =
+        /registration is required|register (online|here|now|in advance|at)|please register|sign[- ]?up required|rsvp/i.test(
+          desc,
+        );
+
       events.push({
         sourceId: "library",
         externalId: (vAny.uid as string) ?? k,
@@ -108,6 +114,8 @@ export const librarySource: SourceDefinition = {
         ageMinMonths: min,
         ageMaxMonths: max,
         indoorness: (isOffsite ? "outdoor" : "indoor") as Indoorness,
+        cost: "free",
+        registration: needsSignup ? "required" : "walk-in",
         url: (vAny.url as string | undefined) ?? null,
         evergreen: false,
       });

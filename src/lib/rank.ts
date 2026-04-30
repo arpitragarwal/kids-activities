@@ -2,7 +2,7 @@ import { sql, ensureSchema } from "./db";
 import { config } from "./config";
 import { distanceMiles } from "./distance";
 import { summarizeForHour, type HourlyForecast, type WeatherSummary } from "./weather";
-import type { Indoorness } from "./types";
+import type { Indoorness, Registration } from "./types";
 
 export interface DbEventRow {
   source_id: string;
@@ -17,6 +17,8 @@ export interface DbEventRow {
   age_min_months: number | null;
   age_max_months: number | null;
   indoorness: Indoorness;
+  cost: string;
+  registration: Registration;
   url: string | null;
   evergreen: boolean;
 }
@@ -33,7 +35,7 @@ export async function fetchEventsBetween(start: Date, end: Date): Promise<DbEven
   const { rows } = (await sql`
     SELECT source_id, external_id, title, description, start_at, end_at,
            location, lat, lng, age_min_months, age_max_months,
-           indoorness, url, evergreen
+           indoorness, cost, registration, url, evergreen
     FROM events
     WHERE evergreen = TRUE
        OR (start_at >= ${start.toISOString()} AND start_at <= ${end.toISOString()})

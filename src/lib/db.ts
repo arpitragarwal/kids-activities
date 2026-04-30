@@ -48,6 +48,9 @@ export async function ensureSchema(): Promise<void> {
       )
     `;
     await sql`CREATE INDEX IF NOT EXISTS events_start_at_idx ON events (start_at)`;
+    // Additive migrations — safe to re-run.
+    await sql`ALTER TABLE events ADD COLUMN IF NOT EXISTS cost TEXT NOT NULL DEFAULT 'unknown'`;
+    await sql`ALTER TABLE events ADD COLUMN IF NOT EXISTS registration TEXT NOT NULL DEFAULT 'unknown'`;
     await sql`
       CREATE TABLE IF NOT EXISTS weather_cache (
         lat DOUBLE PRECISION NOT NULL,

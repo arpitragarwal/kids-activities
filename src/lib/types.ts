@@ -1,5 +1,10 @@
 export type Indoorness = "indoor" | "outdoor" | "either";
 
+// "free" | "paid" | "$15+" — kept loose so sources can pass formatted prefixes.
+export type Cost = string;
+
+export type Registration = "required" | "walk-in" | "drop-in" | "unknown";
+
 export interface NormalizedEvent {
   sourceId: string;
   externalId: string;
@@ -13,6 +18,8 @@ export interface NormalizedEvent {
   ageMinMonths: number | null;
   ageMaxMonths: number | null;
   indoorness: Indoorness;
+  cost: Cost;
+  registration: Registration;
   url: string | null;
   evergreen: boolean; // true for parks/places without scheduled times
   raw?: unknown;

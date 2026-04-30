@@ -23,12 +23,13 @@ async function upsertEvents(sourceId: string, events: NormalizedEvent[]): Promis
       INSERT INTO events (
         source_id, external_id, title, description,
         start_at, end_at, location, lat, lng,
-        age_min_months, age_max_months, indoorness, url, evergreen
+        age_min_months, age_max_months, indoorness, cost, registration, url, evergreen
       ) VALUES (
         ${e.sourceId}, ${e.externalId}, ${e.title}, ${e.description},
         ${e.startAt.toISOString()}, ${e.endAt ? e.endAt.toISOString() : null},
         ${e.location}, ${e.lat}, ${e.lng},
-        ${e.ageMinMonths}, ${e.ageMaxMonths}, ${e.indoorness}, ${e.url}, ${e.evergreen}
+        ${e.ageMinMonths}, ${e.ageMaxMonths}, ${e.indoorness},
+        ${e.cost}, ${e.registration}, ${e.url}, ${e.evergreen}
       )
       ON CONFLICT (source_id, external_id) DO UPDATE SET
         title = EXCLUDED.title,
@@ -41,6 +42,8 @@ async function upsertEvents(sourceId: string, events: NormalizedEvent[]): Promis
         age_min_months = EXCLUDED.age_min_months,
         age_max_months = EXCLUDED.age_max_months,
         indoorness = EXCLUDED.indoorness,
+        cost = EXCLUDED.cost,
+        registration = EXCLUDED.registration,
         url = EXCLUDED.url,
         evergreen = EXCLUDED.evergreen,
         seen_at = NOW()

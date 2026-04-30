@@ -17,6 +17,8 @@ interface ActivityItem {
   age_description: string;
   location: { label: string };
   number: string;
+  search_from_price: number | null;
+  allow_drop_in_reg: boolean;
 }
 
 // Approximate locations of MV recreation venues. Used when we can match by name.
@@ -132,6 +134,15 @@ export const cityRecSource: SourceDefinition = {
       // Strip HTML from desc.
       const desc = a.desc.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim().slice(0, 800);
 
+      // Cost: prefer numeric search_from_price; otherwise mark "paid" since these
+      // recreation classes generally have a fee.
+      const cost: string =
+        typeof a.search_from_price === "number" && a.search_from_price > 0
+          ? `$${a.search_from_price}+`
+          : a.search_from_price === 0
+          ? "free"
+          : "paid";
+
       // ActiveNet activities are series, not one-off events. Treat as evergreen
       // (rank surfaces them whenever within date range), but anchor startAt to
       // series start for sorting.
@@ -152,6 +163,8 @@ export const cityRecSource: SourceDefinition = {
           : /park/i.test(venue)
           ? "outdoor"
           : "indoor",
+        cost,
+        registration: a.allow_drop_in_reg ? "drop-in" : "required",
         url: a.detail_url,
         evergreen: true,
       });

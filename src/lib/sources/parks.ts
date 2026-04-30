@@ -138,6 +138,8 @@ export const parksSource: SourceDefinition = {
       ageMinMonths: p.ageMinMonths,
       ageMaxMonths: p.ageMaxMonths,
       indoorness: p.indoorness,
+      cost: "free",
+      registration: "walk-in",
       url: p.url ?? null,
       evergreen: true,
       raw: { tags: p.tags },
