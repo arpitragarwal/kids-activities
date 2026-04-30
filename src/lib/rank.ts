@@ -3,6 +3,7 @@ import { config } from "./config";
 import { distanceMiles } from "./distance";
 import { summarizeForHour, type HourlyForecast, type WeatherSummary } from "./weather";
 import { parseScheduleLabel } from "./schedule";
+import { formatAgeRange } from "./age";
 import type { Indoorness, Registration } from "./types";
 
 export interface DbEventRow {
@@ -69,9 +70,10 @@ export function rank(events: DbEventRow[], input: RankInput): RankedEvent[] {
     const min = e.age_min_months;
     const max = e.age_max_months;
     if (min !== null && max !== null) {
+      const range = formatAgeRange(min, max);
       if (input.childAgeMonths >= min && input.childAgeMonths <= max) {
         score += 0.4;
-        reasons.push(`age fits (${min}-${max}mo)`);
+        reasons.push(`age fits (${range})`);
       } else {
         // How far out of range?
         const off =
@@ -80,7 +82,7 @@ export function rank(events: DbEventRow[], input: RankInput): RankedEvent[] {
             : input.childAgeMonths - max;
         if (off <= 6) score += 0.05;
         else score -= 0.5;
-        reasons.push(`age range ${min}-${max}mo (off by ${off}mo)`);
+        reasons.push(`age ${range} (off by ${off}mo)`);
       }
     } else {
       score += 0.05;

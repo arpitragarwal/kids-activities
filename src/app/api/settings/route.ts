@@ -50,15 +50,30 @@ export async function POST(req: NextRequest) {
     return NextResponse.redirect(redirectUrl, 303);
   }
 
-  // Age
-  const ageRaw = String(form.get("ageMonths") ?? "").trim();
-  if (ageRaw) {
-    const n = Number(ageRaw);
+  // Age — preferred form is ageYears + ageExtraMonths; ageMonths kept as a
+  // legacy fallback so prior bookmarks / autofill still work.
+  const yearsRaw = form.get("ageYears");
+  const extraRaw = form.get("ageExtraMonths");
+  const legacyRaw = form.get("ageMonths");
+  let ageMonths: number | null = null;
+  if (yearsRaw !== null || extraRaw !== null) {
+    const y = Number(yearsRaw ?? 0);
+    const m = Number(extraRaw ?? 0);
+    if (!Number.isFinite(y) || y < 0 || y > 20 || !Number.isFinite(m) || m < 0 || m > 11) {
+      redirectUrl.searchParams.set("error", "Years 0-20, extra months 0-11");
+      return NextResponse.redirect(redirectUrl, 303);
+    }
+    ageMonths = Math.round(y) * 12 + Math.round(m);
+  } else if (legacyRaw !== null && String(legacyRaw).trim() !== "") {
+    const n = Number(legacyRaw);
     if (!Number.isFinite(n) || n < 0 || n > 240) {
       redirectUrl.searchParams.set("error", "Age must be 0-240 months");
       return NextResponse.redirect(redirectUrl, 303);
     }
-    c.set("ageMonths", String(Math.round(n)), {
+    ageMonths = Math.round(n);
+  }
+  if (ageMonths !== null) {
+    c.set("ageMonths", String(ageMonths), {
       maxAge: COOKIE_MAX_AGE,
       sameSite: "lax",
       path: "/",

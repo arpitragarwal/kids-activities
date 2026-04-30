@@ -1,4 +1,5 @@
 import type { EffectiveConfig } from "@/lib/userPrefs";
+import { splitYearsMonths, formatAge } from "@/lib/age";
 
 export function SettingsBar({
   cfg,
@@ -9,7 +10,7 @@ export function SettingsBar({
   status?: string;
   error?: string;
 }) {
-  const yearsOld = (cfg.child.ageMonths / 12).toFixed(1);
+  const { years, months } = splitYearsMonths(cfg.child.ageMonths);
   const homeLabel = cfg.home.isDefault
     ? "Mountain View (default)"
     : cfg.home.label.split(",").slice(0, 2).join(",");
@@ -19,17 +20,33 @@ export function SettingsBar({
       <form action="/api/settings" method="post" className="flex flex-wrap items-end gap-3">
         <div className="flex flex-col">
           <label className="text-[11px] uppercase tracking-wide text-stone-500">
-            Kid age (months)
+            Kid age
           </label>
-          <input
-            name="ageMonths"
-            type="number"
-            min={0}
-            max={240}
-            defaultValue={cfg.child.ageMonths}
-            className="mt-0.5 w-24 rounded border border-stone-300 px-2 py-1 text-sm"
-          />
-          <span className="text-[10px] text-stone-400 mt-0.5">{yearsOld}y</span>
+          <div className="mt-0.5 flex items-center gap-1">
+            <input
+              name="ageYears"
+              type="number"
+              min={0}
+              max={20}
+              defaultValue={years}
+              aria-label="Years"
+              className="w-14 rounded border border-stone-300 px-2 py-1 text-sm"
+            />
+            <span className="text-xs text-stone-500">y</span>
+            <input
+              name="ageExtraMonths"
+              type="number"
+              min={0}
+              max={11}
+              defaultValue={months}
+              aria-label="Months"
+              className="w-14 rounded border border-stone-300 px-2 py-1 text-sm"
+            />
+            <span className="text-xs text-stone-500">m</span>
+          </div>
+          <span className="text-[10px] text-stone-400 mt-0.5">
+            now: {formatAge(cfg.child.ageMonths)}
+          </span>
         </div>
 
         <div className="flex flex-col flex-1 min-w-[220px]">
