@@ -1,14 +1,15 @@
 import { addDays, startOfDay, endOfDay } from "date-fns";
 import { formatInTimeZone } from "date-fns-tz";
-import { config } from "@/lib/config";
 import { fetchEventsBetween, rank } from "@/lib/rank";
 import { getCachedWeather } from "@/lib/weather";
+import { getEffectiveConfig } from "@/lib/userPrefs";
 import { EventCard } from "@/components/EventCard";
 
 export const dynamic = "force-dynamic";
 
 export default async function CalendarPage() {
   const now = new Date();
+  const cfg = await getEffectiveConfig();
   const start = startOfDay(now);
   const end = endOfDay(addDays(now, 7));
 
@@ -20,8 +21,8 @@ export default async function CalendarPage() {
   const ranked = rank(dbEvents, {
     at: now,
     weather: periods,
-    childAgeMonths: config.child.ageMonths,
-    home: config.home,
+    childAgeMonths: cfg.child.ageMonths,
+    home: cfg.home,
   });
 
   // Bucket by day. Evergreen entries appear under "Anytime".
@@ -29,7 +30,7 @@ export default async function CalendarPage() {
   const dayKeys: string[] = [];
   for (let i = 0; i < 7; i++) {
     const d = addDays(start, i);
-    const k = formatInTimeZone(d, config.timezone, "EEE MMM d");
+    const k = formatInTimeZone(d, cfg.timezone, "EEE MMM d");
     days[k] = [];
     dayKeys.push(k);
   }
@@ -39,7 +40,7 @@ export default async function CalendarPage() {
       days["Anytime"].push(e);
       continue;
     }
-    const k = formatInTimeZone(new Date(e.start_at), config.timezone, "EEE MMM d");
+    const k = formatInTimeZone(new Date(e.start_at), cfg.timezone, "EEE MMM d");
     if (days[k]) days[k].push(e);
   }
 

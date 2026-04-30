@@ -1,17 +1,24 @@
 import { addHours, endOfDay, startOfDay } from "date-fns";
-import { config } from "@/lib/config";
 import { fetchEventsBetween, rank } from "@/lib/rank";
 import { getCachedWeather } from "@/lib/weather";
 import { getSourceHealth } from "@/lib/sources";
+import { getEffectiveConfig } from "@/lib/userPrefs";
 import { EventCard } from "@/components/EventCard";
 import { WeatherBanner } from "@/components/WeatherBanner";
+import { SettingsBar } from "@/components/SettingsBar";
 import Link from "next/link";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-export default async function HomePage() {
+export default async function HomePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ status?: string; error?: string }>;
+}) {
   const now = new Date();
+  const cfg = await getEffectiveConfig();
+  const params = await searchParams;
   const [{ periods, fetchedAt }, dbEvents, health] = await Promise.all([
     getCachedWeather(),
     fetchEventsBetween(startOfDay(now), endOfDay(addHours(now, 24))),
@@ -21,21 +28,16 @@ export default async function HomePage() {
   const ranked = rank(dbEvents, {
     at: now,
     weather: periods,
-    childAgeMonths: config.child.ageMonths,
-    home: config.home,
+    childAgeMonths: cfg.child.ageMonths,
+    home: cfg.home,
   });
   const top = ranked.slice(0, 12);
 
   const broken = health.filter((h) => h.status === "broken" || h.status === "stale");
 
-  const yearsOld = (config.child.ageMonths / 12).toFixed(1);
-
   return (
     <main>
-      <div className="mb-2 text-sm text-stone-500">
-        Picks for {config.child.name} ({yearsOld}y) · within{" "}
-        {config.maxDistanceMiles}mi of home
-      </div>
+      <SettingsBar cfg={cfg} status={params.status} error={params.error} />
 
       <WeatherBanner periods={periods} fetchedAt={fetchedAt} />
 
