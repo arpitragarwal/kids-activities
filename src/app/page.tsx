@@ -38,7 +38,29 @@ export default async function HomePage({
   const todayPicks = ranked.filter(
     (e) => !(e.source_id === "cityRec" && e.evergreen) || meetsOn(e.schedule_label, todayDow),
   );
-  const top = todayPicks.slice(0, 12);
+
+  // Top picks: 3 events with diversity. First pass takes the highest-scoring
+  // event from each (source, indoorness) bucket; if we still need slots, fill
+  // from the next-highest remaining.
+  const topPicks: typeof todayPicks = [];
+  const usedBuckets = new Set<string>();
+  for (const e of todayPicks) {
+    if (topPicks.length >= 3) break;
+    const bucket = `${e.source_id}:${e.indoorness}`;
+    if (usedBuckets.has(bucket)) continue;
+    topPicks.push(e);
+    usedBuckets.add(bucket);
+  }
+  if (topPicks.length < 3) {
+    const pickedIds = new Set(topPicks.map((e) => `${e.source_id}:${e.external_id}`));
+    for (const e of todayPicks) {
+      if (topPicks.length >= 3) break;
+      if (pickedIds.has(`${e.source_id}:${e.external_id}`)) continue;
+      topPicks.push(e);
+    }
+  }
+  const topPickIds = new Set(topPicks.map((e) => `${e.source_id}:${e.external_id}`));
+  const rest = todayPicks.filter((e) => !topPickIds.has(`${e.source_id}:${e.external_id}`));
 
   const broken = health.filter((h) => h.status === "broken" || h.status === "stale");
 
@@ -59,10 +81,7 @@ export default async function HomePage({
         </div>
       )}
 
-      <h2 className="text-xs uppercase tracking-wide text-stone-500 mb-2">
-        Top picks right now
-      </h2>
-      {top.length === 0 ? (
+      {todayPicks.length === 0 ? (
         <div className="border border-stone-200 rounded-lg p-6 text-center text-stone-500 bg-white">
           <p>No events yet — has the cron run?</p>
           <p className="mt-2 text-xs">
@@ -72,11 +91,30 @@ export default async function HomePage({
           </p>
         </div>
       ) : (
-        <div className="space-y-3">
-          {top.map((e) => (
-            <EventCard key={`${e.source_id}-${e.external_id}`} event={e} />
-          ))}
-        </div>
+        <>
+          <section className="mb-8">
+            <h2 className="text-xs uppercase tracking-wide text-stone-500 mb-2">
+              Top picks
+            </h2>
+            <div className="space-y-3">
+              {topPicks.map((e) => (
+                <EventCard key={`${e.source_id}-${e.external_id}`} event={e} />
+              ))}
+            </div>
+          </section>
+
+          <section>
+            <h2 className="text-xs uppercase tracking-wide text-stone-500 mb-2">
+              Everything available right now{" "}
+              <span className="text-stone-400 normal-case">({rest.length})</span>
+            </h2>
+            <div className="space-y-3">
+              {rest.map((e) => (
+                <EventCard key={`${e.source_id}-${e.external_id}`} event={e} />
+              ))}
+            </div>
+          </section>
+        </>
       )}
     </main>
   );
