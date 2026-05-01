@@ -1,32 +1,43 @@
 # MV Kids
 
-Activity recommender for little kids (0–5) in Mountain View, CA. Pulls events
-from the public library, the city's recreation registration system, and a
-curated park list, ranks them against weather/age/distance, and refreshes
-hourly via cron.
+Activity recommender for young kids in Mountain View, CA and nearby cities.
+Pulls events from city recreation systems, public libraries, and a curated
+park list, ranks them against weather/age/distance, and refreshes hourly via cron.
 
 ## Stack
 
 - Next.js 15 (App Router) on Vercel
-- Postgres via `@vercel/postgres` (works with Neon, Vercel Postgres, Supabase)
+- Postgres via `@neondatabase/serverless` (Neon, Vercel Postgres, or Supabase)
 - NWS weather API (no key required)
 - Vercel Cron for scheduled refresh
 
 ## Sources
 
-| Id        | Source                              | Mechanism                                              |
-| --------- | ----------------------------------- | ------------------------------------------------------ |
-| `library` | Mountain View Public Library        | LibCal iCal feed (`ical_subscribe.php?cid=8800`)       |
-| `cityRec` | City of Mountain View Recreation    | ActiveNet REST endpoint (`/rest/activities/list`)      |
-| `parks`   | Curated parks & indoor places       | Hardcoded list in `src/lib/sources/parks.ts`           |
+| Id | Source | Mechanism |
+|----|--------|-----------|
+| `library` | Mountain View Public Library | LibCal iCal feed (`ical_subscribe.php?cid=8800`) |
+| `paloAltoLibrary` | Palo Alto City Library | BiblioCommons RSS (`gateway.bibliocommons.com/v2/libraries/paloalto/rss/events`) |
+| `scclLibrary` | Santa Clara County Library (Cupertino + Los Altos branches) | BiblioCommons RSS, filtered by branch |
+| `cityRec` | City of Mountain View Recreation | ActiveNet REST API (`mountainviewrecreation`) |
+| `santaClaraRec` | City of Santa Clara Recreation | ActiveNet REST API (`santaclara`) |
+| `cupertinoRec` | City of Cupertino Recreation | ActiveNet REST API (`cupertino`) |
+| `parks` | Curated parks & indoor places | Hardcoded list in `src/lib/sources/parks.ts` |
 
-When a source breaks, it shows up on `/health` with the last error. Manual
-re-run buttons live there too.
+When a source breaks it shows up on `/health` with the last error.
+
+### Sources not yet integrated
+
+| City | System | Blocker |
+|------|--------|---------|
+| Sunnyvale Parks & Rec | Unknown (not ActiveNet) | City website blocked by Akamai CDN |
+| Palo Alto Parks & Rec | Unknown | City website returns 403 |
+| Los Altos Parks & Rec | Rec1 (`secure.rec1.com`) | Server-rendered SPA, no public API |
+| Sunnyvale Public Library | LibCal | Calendar ID (cid) requires auth to discover |
+| Santa Clara City Library | Unknown | All endpoints return 403 |
 
 ## Running locally
 
-1. Spin up a free Postgres (Neon: <https://neon.tech>). Copy the connection
-   string.
+1. Spin up a free Postgres (Neon: <https://neon.tech>). Copy the connection string.
 
 2. ```bash
    cp .env.example .env.local
@@ -52,7 +63,8 @@ re-run buttons live there too.
 
 ## Configuration
 
-Edit `src/lib/config.ts` (or set env vars):
+User preferences are stored in the database and editable via the settings drawer
+in the app. Defaults can be set in `src/lib/config.ts` or via env vars:
 
 - `CHILD_AGE_MONTHS` — age in months (default 36)
 - `HOME_LAT`, `HOME_LNG` — home coordinates for distance ranking
@@ -60,35 +72,46 @@ Edit `src/lib/config.ts` (or set env vars):
 
 ## Adding a source
 
-1. Create `src/lib/sources/<name>.ts` exporting a `SourceDefinition`.
-2. Add it to the `SOURCES` array in `src/lib/sources/index.ts`.
-3. Trigger a refresh — `/health` will show its status.
+**ActiveNet (city recreation):** add a new entry to `makeCityRecSource()` callers
+in `src/lib/sources/cityRec.ts` — just supply the slug and venue coords.
 
-A source's `fetch()` should normalize to `NormalizedEvent[]`. Throw on
-fetch/parse failure — the registry records the error and the next run will
-retry.
+**BiblioCommons (library):** add a new `makeBiblioCommonsSource()` call in
+`src/lib/sources/bibliocommons.ts` — supply the domain slug and optionally a
+`branchFilter` to restrict to specific library branches.
+
+**Other:** create `src/lib/sources/<name>.ts` exporting a `SourceDefinition`,
+then add it to `SOURCES` in `src/lib/sources/index.ts`.
+
+A source's `fetch()` should normalize to `NormalizedEvent[]`. Throw on failure —
+the registry records the error and the next run will retry.
+
+## UI
+
+- **Week strip** — 7-day tab bar at the top; today is selected by default
+- **Filter chips** — Indoor / Outdoor / Free / Drop-in (AND logic)
+- **Map view** — Leaflet + OpenStreetMap; toggle per day; pins colored by indoor/outdoor
+- **Top picks** — up to 3 events, diversified across source × indoorness buckets
+- **Context header** — date, time, weather summary, child age/location profile
 
 ## Ranking
 
-`src/lib/rank.ts` produces a score per event from these signals:
+`src/lib/rank.ts` scores each event:
 
-- **Age fit** — bonus when child age in months falls inside the event's range
-- **Distance** — bonus for ≤1mi, penalty beyond `maxDistanceMiles`
+- **Age fit** — bonus when child age falls inside the event's range
+- **Distance** — bonus for ≤1 mi, penalty beyond `maxDistanceMiles`
 - **Weather** — outdoor events boosted on nice days, indoor when wet/hot/cold
 - **Time of day** — boost for "happening now" or "starts soon"; penalty during
-  the toddler nap window (12–2pm) for kids under 3
-- **Evergreen vs scheduled** — parks always rank against the asking hour's
-  weather
+  nap window (12–2 pm) for kids under 3
+- **Evergreen vs scheduled** — parks always rank against the current weather
 
-Each event surfaces its reasons as chips in the UI so you can see why it
-ranked where it did.
+Score reasons surface as chips on each event card.
 
 ## Caveats
 
-- LibCal iCal feed mixes adult, teen, and kids events — we filter on
-  category/keyword. The filter is intentionally conservative: a few real kids
-  events may get dropped, which is preferable to surfacing adult ESL classes.
-- ActiveNet activities are series, not one-off events. They show as
-  "evergreen" while their series window is active.
-- The MV city site (`mountainview.gov`) is firewalled by Akamai and can't be
-  scraped reliably, so we go directly to the registration platform behind it.
+- BiblioCommons and LibCal feeds mix all-ages events — we filter on audience
+  category labels. A few edge-case kids events may be dropped; that's preferable
+  to surfacing adult ESL or senior programs.
+- ActiveNet activities are series, not one-off events. They show as "evergreen"
+  while their series date window is active.
+- City rec websites (MV, SC, Cupertino) are behind Akamai and can't be scraped
+  directly — we call the ActiveNet API behind them instead.
