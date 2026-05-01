@@ -1,10 +1,16 @@
 import { sql, ensureSchema } from "../db";
 import type { NormalizedEvent, SourceDefinition, SourceHealth } from "../types";
 import { librarySource } from "./library";
-import { cityRecSource } from "./cityRec";
+import { cityRecSource, santaClaraRecSource, cupertinoRecSource } from "./cityRec";
 import { parksSource } from "./parks";
 
-export const SOURCES: SourceDefinition[] = [librarySource, cityRecSource, parksSource];
+export const SOURCES: SourceDefinition[] = [
+  librarySource,
+  cityRecSource,
+  santaClaraRecSource,
+  cupertinoRecSource,
+  parksSource,
+];
 
 export interface RefreshOutcome {
   sourceId: string;
