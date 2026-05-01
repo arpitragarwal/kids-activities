@@ -1,24 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef } from "react";
+import "leaflet/dist/leaflet.css";
 import type { RankedEvent } from "@/lib/rank";
-
-// ─── Projection ───────────────────────────────────────────────────────────
-// Bounding box covers Mountain View / surrounding area.
-
-const BOUNDS = {
-  minLat: 37.360, maxLat: 37.410,
-  minLng: -122.110, maxLng: -122.065,
-};
-const W = 640, H = 220;
-
-function project(lat: number, lng: number) {
-  const x = ((lng - BOUNDS.minLng) / (BOUNDS.maxLng - BOUNDS.minLng)) * W;
-  const y = H - ((lat - BOUNDS.minLat) / (BOUNDS.maxLat - BOUNDS.minLat)) * H;
-  return { x, y };
-}
-
-// ─── Colors ───────────────────────────────────────────────────────────────
 
 const PIN_COLOR: Record<string, string> = {
   indoor:  "#2e78b8",
@@ -26,7 +10,22 @@ const PIN_COLOR: Record<string, string> = {
   either:  "#c9893a",
 };
 
-// ─── MapView ──────────────────────────────────────────────────────────────
+function pinIcon(L: typeof import("leaflet"), color: string) {
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="22" height="30" viewBox="0 0 22 30">
+    <path d="M11 0C4.9 0 0 4.9 0 11c0 8.3 11 19 11 19S22 19.3 22 11C22 4.9 17.1 0 11 0z"
+      fill="${color}" stroke="white" stroke-width="1.5"/>
+    <circle cx="11" cy="11" r="3.5" fill="white" opacity="0.9"/>
+  </svg>`;
+  return L.divIcon({ html: svg, className: "", iconSize: [22, 30], iconAnchor: [11, 30], popupAnchor: [0, -32] });
+}
+
+function homeIcon(L: typeof import("leaflet")) {
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 28 28">
+    <circle cx="14" cy="14" r="13" fill="#4a6fa5" stroke="white" stroke-width="2"/>
+    <text x="14" y="19" text-anchor="middle" fill="white" font-size="13" font-family="sans-serif">⌂</text>
+  </svg>`;
+  return L.divIcon({ html: svg, className: "", iconSize: [28, 28], iconAnchor: [14, 14] });
+}
 
 export function MapView({
   events,
@@ -37,125 +36,59 @@ export function MapView({
   homeLat: number;
   homeLng: number;
 }) {
-  const [hovered, setHovered] = useState<string | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const mapRef = useRef<import("leaflet").Map | null>(null);
 
-  const homePos = project(homeLat, homeLng);
+  useEffect(() => {
+    if (!containerRef.current) return;
+    let cancelled = false;
 
-  // Dedupe pins by lat/lng bucket to avoid stacked markers.
-  const seen = new Set<string>();
-  const pins = events
-    .filter((e) => e.lat !== null && e.lng !== null)
-    .filter((e) => {
-      const key = `${e.lat!.toFixed(4)},${e.lng!.toFixed(4)}`;
-      if (seen.has(key)) return false;
-      seen.add(key);
-      return true;
+    import("leaflet").then((mod) => {
+      if (cancelled || !containerRef.current) return;
+      const L = mod.default;
+
+      // Tear down any previous instance
+      mapRef.current?.remove();
+
+      const map = L.map(containerRef.current, {
+        center: [homeLat, homeLng],
+        zoom: 13,
+        zoomControl: true,
+      });
+
+      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+        maxZoom: 19,
+      }).addTo(map);
+
+      L.marker([homeLat, homeLng], { icon: homeIcon(L) }).addTo(map);
+
+      const seen = new Set<string>();
+      for (const e of events) {
+        if (e.lat == null || e.lng == null) continue;
+        const key = `${e.lat.toFixed(4)},${e.lng.toFixed(4)}`;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        L.marker([e.lat, e.lng], { icon: pinIcon(L, PIN_COLOR[e.indoorness] ?? "#666") })
+          .bindPopup(`<strong style="font-size:13px">${e.title}</strong>`)
+          .addTo(map);
+      }
+
+      mapRef.current = map;
     });
+
+    return () => {
+      cancelled = true;
+      mapRef.current?.remove();
+      mapRef.current = null;
+    };
+  }, [homeLat, homeLng, events]);
+
+  const pinCount = events.filter((e) => e.lat != null && e.lng != null).length;
 
   return (
     <div className="bg-white border border-stone-200 rounded-xl overflow-hidden shadow-sm mb-5">
-      <svg
-        viewBox={`0 0 ${W} ${H}`}
-        style={{ display: "block", width: "100%" }}
-      >
-        {/* Background */}
-        <rect width={W} height={H} fill="#f0ede8" />
-
-        {/* Grid lines */}
-        {[0.2, 0.4, 0.6, 0.8].map((t) => (
-          <g key={t}>
-            <line x1={W * t} y1={0} x2={W * t} y2={H} stroke="#e0dbd3" strokeWidth="1" />
-            <line x1={0} y1={H * t} x2={W} y2={H * t} stroke="#e0dbd3" strokeWidth="1" />
-          </g>
-        ))}
-
-        {/* Block shapes for street texture */}
-        {[0.1, 0.3, 0.5, 0.7, 0.9].flatMap((tx) =>
-          [0.15, 0.35, 0.55, 0.75].map((ty) => (
-            <rect
-              key={`${tx}-${ty}`}
-              x={W * tx - 18} y={H * ty - 10} width={36} height={20}
-              rx={3} fill="#e8e3dc" opacity="0.5"
-            />
-          ))
-        )}
-
-        {/* Distance radius from home */}
-        <circle
-          cx={homePos.x} cy={homePos.y} r={H * 0.35}
-          fill="none" stroke="#4a6fa5" strokeWidth="1"
-          strokeDasharray="4 4" opacity="0.25"
-        />
-
-        {/* Event pins */}
-        {pins.map((e) => {
-          const pos = project(e.lat!, e.lng!);
-          const key = `${e.source_id}:${e.external_id}`;
-          const color = PIN_COLOR[e.indoorness] ?? "#666";
-          const isHovered = hovered === key;
-          const scale = isHovered ? 1.15 : 1;
-
-          return (
-            <g
-              key={key}
-              onMouseEnter={() => setHovered(key)}
-              onMouseLeave={() => setHovered(null)}
-              style={{ cursor: "pointer" }}
-            >
-              {/* Drop shadow */}
-              <ellipse cx={pos.x} cy={pos.y + 14} rx={5} ry={2.5} fill="rgba(0,0,0,0.15)" />
-              {/* Pin body */}
-              <path
-                d={`M${pos.x},${pos.y + 14} C${pos.x - 8},${pos.y + 6} ${pos.x - 8},${pos.y - 8} ${pos.x},${pos.y - 8} C${pos.x + 8},${pos.y - 8} ${pos.x + 8},${pos.y + 6} ${pos.x},${pos.y + 14}z`}
-                fill={color}
-                stroke="white"
-                strokeWidth={isHovered ? 2.5 : 1.5}
-                transform={`translate(${pos.x},${pos.y - 2}) scale(${scale}) translate(${-pos.x},${-(pos.y - 2)})`}
-                style={{ transition: "transform 0.15s ease" }}
-              />
-              {/* Pin dot */}
-              <circle cx={pos.x} cy={pos.y - 2} r={2.5} fill="white" opacity="0.9" />
-
-              {/* Hover tooltip */}
-              {isHovered && (() => {
-                const tipX = Math.min(Math.max(pos.x - 60, 4), W - 124);
-                const tipY = pos.y - 42;
-                const label = e.title.length > 18 ? e.title.slice(0, 17) + "…" : e.title;
-                return (
-                  <g>
-                    <rect x={tipX} y={tipY} width={120} height={26} rx={5} fill="rgba(28,25,23,0.88)" />
-                    <text
-                      x={tipX + 60} y={tipY + 17}
-                      textAnchor="middle"
-                      fill="white"
-                      fontSize="10.5"
-                      fontFamily="DM Sans, ui-sans-serif, sans-serif"
-                      fontWeight="500"
-                    >
-                      {label}
-                    </text>
-                  </g>
-                );
-              })()}
-            </g>
-          );
-        })}
-
-        {/* Home marker */}
-        <circle cx={homePos.x} cy={homePos.y} r={10} fill="#4a6fa5" stroke="white" strokeWidth={2} />
-        <text
-          x={homePos.x} y={homePos.y + 4.5}
-          textAnchor="middle"
-          fill="white"
-          fontSize="9"
-          fontFamily="DM Sans, ui-sans-serif, sans-serif"
-          fontWeight="600"
-        >
-          ⌂
-        </text>
-      </svg>
-
-      {/* Legend */}
+      <div ref={containerRef} style={{ height: 280 }} />
       <div className="flex items-center gap-4 px-3.5 py-2 border-t border-stone-100 bg-stone-50">
         {[
           { color: "#4a6fa5", label: "Home" },
@@ -169,7 +102,7 @@ export function MapView({
           </div>
         ))}
         <span className="ml-auto text-[11px] text-stone-400">
-          {pins.length} location{pins.length !== 1 ? "s" : ""}
+          {pinCount} location{pinCount !== 1 ? "s" : ""}
         </span>
       </div>
     </div>

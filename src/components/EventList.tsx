@@ -3,9 +3,19 @@
 import { useState } from "react";
 import { FilterBar, applyFilters } from "@/components/FilterBar";
 import type { FilterId } from "@/components/FilterBar";
+import dynamic from "next/dynamic";
 import { EventCard } from "@/components/EventCard";
-import { MapView } from "@/components/MapView";
 import type { RankedEvent } from "@/lib/rank";
+
+const MapView = dynamic(
+  () => import("@/components/MapView").then((m) => ({ default: m.MapView })),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="h-[280px] bg-stone-50 border border-stone-200 rounded-xl mb-5 animate-pulse" />
+    ),
+  },
+);
 
 export interface DayData {
   label: string;     // "Wed May 1"
