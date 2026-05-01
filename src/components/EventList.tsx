@@ -7,6 +7,14 @@ import { EventCard } from "@/components/EventCard";
 import { MapView } from "@/components/MapView";
 import type { RankedEvent } from "@/lib/rank";
 
+export interface DayData {
+  label: string;     // "Wed May 1"
+  abbr: string;      // "WE"
+  num: number;       // 1
+  topPicks: RankedEvent[];
+  rest: RankedEvent[];
+}
+
 function MapIcon() {
   return (
     <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
@@ -17,28 +25,64 @@ function MapIcon() {
 }
 
 export function EventList({
-  topPicks,
-  rest,
+  days,
   childAgeMonths,
   homeLat,
   homeLng,
 }: {
-  topPicks: RankedEvent[];
-  rest: RankedEvent[];
+  days: DayData[];
   childAgeMonths: number;
   homeLat: number;
   homeLng: number;
 }) {
+  const [activeIdx, setActiveIdx] = useState(0);
   const [active, setActive] = useState(new Set<FilterId>());
   const [showMap, setShowMap] = useState(false);
 
-  const allEvents = [...topPicks, ...rest];
-  const filteredTop = applyFilters(topPicks, active);
-  const filteredRest = applyFilters(rest, active);
+  const day = days[activeIdx];
+  const allEvents = [...day.topPicks, ...day.rest];
+  const filteredTop = applyFilters(day.topPicks, active);
+  const filteredRest = applyFilters(day.rest, active);
   const filteredAll = applyFilters(allEvents, active);
 
   return (
     <>
+      {/* Week strip */}
+      <div className="grid grid-cols-7 gap-1 mb-5 bg-white border border-stone-200 rounded-xl p-1.5">
+        {days.map((d, i) => {
+          const isActive = i === activeIdx;
+          const hasEvents = d.topPicks.length + d.rest.length > 0;
+          return (
+            <button
+              key={d.label}
+              type="button"
+              onClick={() => { setActiveIdx(i); setActive(new Set()); }}
+              className={`flex flex-col items-center gap-0.5 py-2 px-1 rounded-lg transition-all duration-100 ${
+                isActive
+                  ? "bg-stone-900 text-white"
+                  : "text-stone-600 hover:bg-stone-100"
+              }`}
+            >
+              <span className="text-[10px] font-semibold uppercase tracking-wider leading-none">
+                {d.abbr}
+              </span>
+              <span className="text-[15px] font-semibold leading-none mt-0.5">
+                {d.num}
+              </span>
+              <span
+                className={`w-1.5 h-1.5 rounded-full mt-0.5 ${
+                  hasEvents
+                    ? isActive
+                      ? "bg-white"
+                      : "bg-[#4a6fa5]"
+                    : "opacity-0"
+                }`}
+              />
+            </button>
+          );
+        })}
+      </div>
+
       {/* Filter bar + map toggle */}
       <div className="flex items-start gap-2 mb-5">
         <div className="flex-1">
@@ -91,7 +135,7 @@ export function EventList({
       <section>
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-[11px] font-semibold uppercase tracking-widest text-stone-400">
-            Everything available today
+            Everything available {activeIdx === 0 ? "today" : day.label.split(" ").slice(0, 2).join(" ")}
           </h2>
           <span className="text-[11px] font-mono text-stone-400 bg-stone-100 px-2 py-0.5 rounded-full">
             {filteredRest.length}
