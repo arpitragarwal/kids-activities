@@ -2,10 +2,13 @@ import { sql, ensureSchema } from "../db";
 import type { NormalizedEvent, SourceDefinition, SourceHealth } from "../types";
 import { librarySource } from "./library";
 import { cityRecSource, santaClaraRecSource, cupertinoRecSource } from "./cityRec";
+import { paloAltoLibrarySource, scclLibrarySource } from "./bibliocommons";
 import { parksSource } from "./parks";
 
 export const SOURCES: SourceDefinition[] = [
   librarySource,
+  paloAltoLibrarySource,
+  scclLibrarySource,
   cityRecSource,
   santaClaraRecSource,
   cupertinoRecSource,
