@@ -56,7 +56,7 @@ export function MapView({
     <div className="bg-white border border-stone-200 rounded-xl overflow-hidden shadow-sm mb-5">
       <svg
         viewBox={`0 0 ${W} ${H}`}
-        style={{ display: "block", width: "100%", height: 220 }}
+        style={{ display: "block", width: "100%" }}
       >
         {/* Background */}
         <rect width={W} height={H} fill="#f0ede8" />

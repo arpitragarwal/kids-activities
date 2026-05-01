@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState } from "react";
 import type { RankedEvent } from "@/lib/rank";
 
 // ─── Filter definitions ───────────────────────────────────────────────────
