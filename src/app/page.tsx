@@ -1,12 +1,13 @@
 import { addHours, endOfDay, startOfDay } from "date-fns";
 import { fetchEventsBetween, rank } from "@/lib/rank";
-import { getCachedWeather } from "@/lib/weather";
+import { getCachedWeather, summarizeForHour } from "@/lib/weather";
+import { formatInTimeZone } from "date-fns-tz";
+import { config } from "@/lib/config";
 import { getSourceHealth } from "@/lib/sources";
 import { getEffectiveConfig } from "@/lib/userPrefs";
 import { meetsOn } from "@/lib/schedule";
 import { EventCard } from "@/components/EventCard";
-import { WeatherBanner } from "@/components/WeatherBanner";
-import { SettingsBar } from "@/components/SettingsBar";
+import { ContextHeader } from "@/components/ContextHeader";
 import Link from "next/link";
 
 export const dynamic = "force-dynamic";
@@ -20,6 +21,7 @@ export default async function HomePage({
   const now = new Date();
   const cfg = await getEffectiveConfig();
   const params = await searchParams;
+
   const [{ periods, fetchedAt }, dbEvents, health] = await Promise.all([
     getCachedWeather(),
     fetchEventsBetween(startOfDay(now), endOfDay(addHours(now, 24))),
@@ -32,16 +34,16 @@ export default async function HomePage({
     childAgeMonths: cfg.child.ageMonths,
     home: cfg.home,
   });
-  // Today view only — drop class series whose meeting days don't include today.
-  // (Calendar view keeps them, distributed across their meeting days.)
+
+  // Today view — drop recurring classes that don't meet today.
   const todayDow = now.getDay();
   const todayPicks = ranked.filter(
-    (e) => !(e.source_id === "cityRec" && e.evergreen) || meetsOn(e.schedule_label, todayDow),
+    (e) =>
+      !(e.source_id === "cityRec" && e.evergreen) ||
+      meetsOn(e.schedule_label, todayDow),
   );
 
-  // Top picks: 3 events with diversity. First pass takes the highest-scoring
-  // event from each (source, indoorness) bucket; if we still need slots, fill
-  // from the next-highest remaining.
+  // Top picks: up to 3 events, one per (source × indoorness) bucket first.
   const topPicks: typeof todayPicks = [];
   const usedBuckets = new Set<string>();
   for (const e of todayPicks) {
@@ -59,58 +61,101 @@ export default async function HomePage({
       topPicks.push(e);
     }
   }
-  const topPickIds = new Set(topPicks.map((e) => `${e.source_id}:${e.external_id}`));
-  const rest = todayPicks.filter((e) => !topPickIds.has(`${e.source_id}:${e.external_id}`));
 
-  const broken = health.filter((h) => h.status === "broken" || h.status === "stale");
+  const topPickIds = new Set(topPicks.map((e) => `${e.source_id}:${e.external_id}`));
+  const rest = todayPicks.filter(
+    (e) => !topPickIds.has(`${e.source_id}:${e.external_id}`),
+  );
+
+  const broken = health.filter(
+    (h) => h.status === "broken" || h.status === "stale",
+  );
+
+  const wx = summarizeForHour(periods, now);
+  const dateLabel = formatInTimeZone(now, config.timezone, "EEE MMM d");
+  const currentTime = formatInTimeZone(now, config.timezone, "h:mm a");
 
   return (
     <main>
-      <SettingsBar cfg={cfg} status={params.status} error={params.error} />
+      {/* Unified context header: date + weather + profile */}
+      <ContextHeader
+        wx={wx}
+        fetchedAt={fetchedAt}
+        dateLabel={dateLabel}
+        currentTime={currentTime}
+        cfg={cfg}
+        status={params.status}
+        error={params.error}
+      />
 
-      <WeatherBanner periods={periods} fetchedAt={fetchedAt} />
-
+      {/* Source health alert */}
       {broken.length > 0 && (
-        <div className="border border-amber-300 bg-amber-50 rounded-lg p-3 mb-4 text-sm text-amber-900">
-          <div className="font-medium">
-            {broken.length} source{broken.length === 1 ? "" : "s"} need attention
+        <div className="flex items-start gap-2.5 bg-amber-50 border border-amber-200 rounded-xl px-3.5 py-3 mb-5 text-sm text-amber-900">
+          <span className="text-base leading-none mt-0.5">⚠️</span>
+          <div>
+            <span className="font-medium">
+              {broken.length} source{broken.length === 1 ? "" : "s"} need attention
+            </span>{" "}
+            —{" "}
+            <Link href="/health" className="underline underline-offset-2">
+              view source health →
+            </Link>
           </div>
-          <Link href="/health" className="underline">
-            View source health →
-          </Link>
         </div>
       )}
 
+      {/* Empty state */}
       {todayPicks.length === 0 ? (
-        <div className="border border-stone-200 rounded-lg p-6 text-center text-stone-500 bg-white">
-          <p>No events yet — has the cron run?</p>
-          <p className="mt-2 text-xs">
+        <div className="border border-dashed border-stone-300 rounded-xl p-10 text-center bg-white">
+          <p className="text-stone-500 font-medium">No events yet — has the cron run?</p>
+          <p className="mt-2 text-xs text-stone-400">
             Hit{" "}
-            <code className="bg-stone-100 px-1 py-0.5 rounded">/api/refresh</code>{" "}
+            <code className="bg-stone-100 px-1.5 py-0.5 rounded text-stone-600">
+              /api/refresh
+            </code>{" "}
             to populate.
           </p>
         </div>
       ) : (
         <>
+          {/* Top picks */}
           <section className="mb-8">
-            <h2 className="text-xs uppercase tracking-wide text-stone-500 mb-2">
-              Top picks
-            </h2>
-            <div className="space-y-3">
+            <div className="flex items-center gap-2 mb-3">
+              <span className="inline-flex items-center gap-1.5 text-[11.5px] font-semibold bg-amber-50 text-amber-700 border border-amber-200 rounded-full px-2.5 py-1">
+                <svg width="11" height="11" viewBox="0 0 16 16" fill="currentColor">
+                  <path d="M8 1l1.8 3.6L14 5.4l-3 2.9.7 4.1L8 10.4l-3.7 2 .7-4.1-3-2.9 4.2-.8z" />
+                </svg>
+                Top picks
+              </span>
+            </div>
+            <div className="flex flex-col gap-2.5">
               {topPicks.map((e) => (
-                <EventCard key={`${e.source_id}-${e.external_id}`} event={e} />
+                <EventCard
+                  key={`${e.source_id}-${e.external_id}`}
+                  event={e}
+                  childAgeMonths={cfg.child.ageMonths}
+                />
               ))}
             </div>
           </section>
 
+          {/* Everything else */}
           <section>
-            <h2 className="text-xs uppercase tracking-wide text-stone-500 mb-2">
-              Everything available right now{" "}
-              <span className="text-stone-400 normal-case">({rest.length})</span>
-            </h2>
-            <div className="space-y-3">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-[11px] font-semibold uppercase tracking-widest text-stone-400">
+                Everything available today
+              </h2>
+              <span className="text-[11px] font-mono text-stone-400 bg-stone-100 px-2 py-0.5 rounded-full">
+                {rest.length}
+              </span>
+            </div>
+            <div className="flex flex-col gap-2.5">
               {rest.map((e) => (
-                <EventCard key={`${e.source_id}-${e.external_id}`} event={e} />
+                <EventCard
+                  key={`${e.source_id}-${e.external_id}`}
+                  event={e}
+                  childAgeMonths={cfg.child.ageMonths}
+                />
               ))}
             </div>
           </section>

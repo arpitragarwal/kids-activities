@@ -1,61 +1,145 @@
 import { formatInTimeZone } from "date-fns-tz";
 import type { RankedEvent } from "@/lib/rank";
+import { formatAgeRange } from "@/lib/age";
 import { config } from "@/lib/config";
-
-const SOURCE_LABEL: Record<string, string> = {
-  library: "Library",
-  cityRec: "City Rec",
-  parks: "Parks",
-};
 
 function fmt(d: Date, pattern: string) {
   return formatInTimeZone(d, config.timezone, pattern);
 }
 
+// ─── Age fit ──────────────────────────────────────────────────────────────
+
+type AgeFit = "fit" | "borderline" | "out" | "unknown";
+
+function getAgeFit(event: RankedEvent, childAgeMonths: number): AgeFit {
+  const { age_min_months: min, age_max_months: max } = event;
+  if (min === null && max === null) return "unknown";
+  if (childAgeMonths >= min! && childAgeMonths <= max!) return "fit";
+  const off = childAgeMonths < min! ? min! - childAgeMonths : childAgeMonths - max!;
+  return off <= 6 ? "borderline" : "out";
+}
+
+const AGE_FIT_RING: Record<AgeFit, string> = {
+  fit:        "border-emerald-400 bg-emerald-50",
+  borderline: "border-amber-400 bg-amber-50",
+  out:        "border-stone-300 bg-transparent",
+  unknown:    "border-stone-200 bg-transparent",
+};
+
+const AGE_FIT_TITLE: Record<AgeFit, string> = {
+  fit:        "Age fits your child",
+  borderline: "Close to age range (within 6 months)",
+  out:        "Outside your child's age range",
+  unknown:    "Age range not specified",
+};
+
+function AgeFitDot({ fit }: { fit: AgeFit }) {
+  return (
+    <span
+      className={`inline-block w-2.5 h-2.5 rounded-full border-2 shrink-0 ${AGE_FIT_RING[fit]}`}
+      title={AGE_FIT_TITLE[fit]}
+    />
+  );
+}
+
+// ─── Indoorness ───────────────────────────────────────────────────────────
+
+const ACCENT_BAR: Record<string, string> = {
+  indoor:  "bg-sky-400",
+  outdoor: "bg-emerald-500",
+  either:  "bg-amber-400",
+};
+
+const INDOOR_CHIP: Record<string, string> = {
+  indoor:  "bg-sky-50 text-sky-700 border-sky-200",
+  outdoor: "bg-emerald-50 text-emerald-700 border-emerald-200",
+  either:  "bg-amber-50 text-amber-700 border-amber-200",
+};
+
+// ─── Score meter ──────────────────────────────────────────────────────────
+
+function ScoreMeter({ score }: { score: number }) {
+  const pct = Math.min(100, (score / 3) * 100);
+  const barColor =
+    score >= 2.0 ? "bg-emerald-500" :
+    score >= 1.5 ? "bg-amber-400" :
+    "bg-stone-300";
+  return (
+    <div className="flex flex-col items-end gap-1">
+      <span className="font-mono text-xl font-medium text-stone-900 leading-none">
+        {score.toFixed(1)}
+      </span>
+      <div className="w-10 h-1 rounded-full bg-stone-100 overflow-hidden">
+        <div className={`h-full rounded-full ${barColor}`} style={{ width: `${pct}%` }} />
+      </div>
+    </div>
+  );
+}
+
+// ─── Badges ───────────────────────────────────────────────────────────────
+
 function CostBadge({ cost }: { cost: string }) {
   const isFree = /^free$/i.test(cost);
-  const cls = isFree
-    ? "bg-emerald-50 text-emerald-800 border-emerald-200"
-    : "bg-amber-50 text-amber-900 border-amber-200";
   return (
-    <span className={`text-[11px] px-1.5 py-0.5 rounded border ${cls}`}>
+    <span
+      className={`text-[11px] px-2 py-0.5 rounded border font-medium ${
+        isFree
+          ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+          : "bg-amber-50 text-amber-800 border-amber-200"
+      }`}
+    >
       {isFree ? "Free" : cost === "paid" ? "Paid" : cost}
     </span>
   );
 }
 
 function RegistrationBadge({ reg }: { reg: RankedEvent["registration"] }) {
-  const map: Record<string, string> = {
-    required: "bg-rose-50 text-rose-800 border-rose-200",
-    "drop-in": "bg-sky-50 text-sky-800 border-sky-200",
-    "walk-in": "bg-stone-100 text-stone-700 border-stone-200",
-    unknown: "bg-stone-50 text-stone-500 border-stone-200",
+  const styles: Record<string, string> = {
+    required:  "bg-rose-50 text-rose-700 border-rose-200",
+    "drop-in": "bg-sky-50 text-sky-700 border-sky-200",
+    "walk-in": "bg-stone-100 text-stone-600 border-stone-200",
+    unknown:   "bg-stone-50 text-stone-400 border-stone-200",
   };
-  const label: Record<string, string> = {
-    required: "Signup required",
+  const labels: Record<string, string> = {
+    required:  "Signup required",
     "drop-in": "Drop-in OK",
     "walk-in": "Walk-in",
-    unknown: "Signup unknown",
+    unknown:   "Signup unknown",
   };
   return (
-    <span className={`text-[11px] px-1.5 py-0.5 rounded border ${map[reg]}`}>
-      {label[reg]}
+    <span className={`text-[11px] px-2 py-0.5 rounded border font-medium ${styles[reg]}`}>
+      {labels[reg]}
     </span>
   );
 }
 
-export function EventCard({ event }: { event: RankedEvent }) {
+// ─── Source label ─────────────────────────────────────────────────────────
+
+const SOURCE_LABEL: Record<string, string> = {
+  library: "Library",
+  cityRec: "City Rec",
+  parks:   "Parks",
+};
+
+// ─── EventCard ────────────────────────────────────────────────────────────
+
+export function EventCard({
+  event,
+  childAgeMonths,
+}: {
+  event: RankedEvent;
+  childAgeMonths?: number;
+}) {
   const start = new Date(event.start_at);
   const end = event.end_at ? new Date(event.end_at) : null;
 
-  // Build a clear timing line.
+  // ── Timing ──
   let timingPrimary: string;
   let timingSecondary: string | null = null;
+
   if (event.evergreen && event.source_id === "parks") {
     timingPrimary = "Open anytime";
   } else if (event.evergreen && event.source_id === "cityRec") {
-    // Series: prefer the meeting pattern (e.g. "Sun · 9:00–9:30 AM"); date range
-    // becomes secondary.
     if (event.schedule_label) {
       timingPrimary = event.schedule_label;
       timingSecondary = end
@@ -68,7 +152,6 @@ export function EventCard({ event }: { event: RankedEvent }) {
       timingSecondary = "Multi-session class";
     }
   } else {
-    // Single-occurrence (library) — show day + start/end times.
     timingPrimary = end
       ? `${fmt(start, "EEE MMM d")} · ${fmt(start, "h:mm a")} – ${fmt(end, "h:mm a")}`
       : `${fmt(start, "EEE MMM d")} · ${fmt(start, "h:mm a")}`;
@@ -76,78 +159,121 @@ export function EventCard({ event }: { event: RankedEvent }) {
     if (minutes && minutes > 0) timingSecondary = `${minutes} min`;
   }
 
+  // ── Age fit ──
+  const ageFit: AgeFit = childAgeMonths !== undefined ? getAgeFit(event, childAgeMonths) : "unknown";
+  const ageRange =
+    event.age_min_months !== null && event.age_max_months !== null
+      ? formatAgeRange(event.age_min_months, event.age_max_months)
+      : null;
+
+  const indoorLabel =
+    event.indoorness === "indoor" ? "Indoor" :
+    event.indoorness === "outdoor" ? "Outdoor" :
+    "In/Out";
+
   return (
-    <article className="border border-stone-200 rounded-lg p-4 bg-white">
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <div className="text-xs uppercase tracking-wide text-stone-500 mb-1">
-            {SOURCE_LABEL[event.source_id] ?? event.source_id} ·{" "}
-            {event.indoorness === "indoor"
-              ? "Indoor"
-              : event.indoorness === "outdoor"
-              ? "Outdoor"
-              : "Indoor / Outdoor"}
-          </div>
-          <h3 className="font-semibold text-base leading-snug">
-            {event.url ? (
-              <a
-                href={event.url}
-                target="_blank"
-                rel="noreferrer"
-                className="hover:underline"
+    <article className="relative bg-white border border-stone-200 rounded-xl overflow-hidden shadow-sm hover:shadow-md hover:-translate-y-px transition-all duration-150">
+      {/* Left accent bar — color by indoorness */}
+      <div className={`absolute left-0 top-0 bottom-0 w-[3px] ${ACCENT_BAR[event.indoorness] ?? "bg-stone-300"}`} />
+
+      <div className="pl-4 pr-4 pt-3.5 pb-3.5">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0 flex-1">
+            {/* Meta row */}
+            <div className="flex items-center gap-1.5 flex-wrap mb-1">
+              <AgeFitDot fit={ageFit} />
+              <span className="text-[10.5px] font-semibold uppercase tracking-wider text-stone-400">
+                {SOURCE_LABEL[event.source_id] ?? event.source_id}
+              </span>
+              <span className="w-[3px] h-[3px] rounded-full bg-stone-300 shrink-0" />
+              <span
+                className={`text-[10.5px] font-medium px-1.5 py-0.5 rounded-full border ${
+                  INDOOR_CHIP[event.indoorness] ?? "bg-stone-100 text-stone-600 border-stone-200"
+                }`}
               >
-                {event.title}
-              </a>
-            ) : (
-              event.title
+                {indoorLabel}
+              </span>
+              {ageRange && (
+                <>
+                  <span className="w-[3px] h-[3px] rounded-full bg-stone-300 shrink-0" />
+                  <span className="text-[10.5px] text-stone-400">{ageRange}</span>
+                </>
+              )}
+            </div>
+
+            {/* Title */}
+            <h3 className="font-semibold text-[15px] leading-snug tracking-tight text-stone-900 mb-1">
+              {event.url ? (
+                <a
+                  href={event.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="hover:underline decoration-stone-300"
+                >
+                  {event.title}
+                </a>
+              ) : (
+                event.title
+              )}
+            </h3>
+
+            {/* Timing */}
+            <div className="flex items-center gap-1.5 flex-wrap text-[13px] font-medium text-stone-600">
+              {timingPrimary}
+              {timingSecondary && (
+                <span className="text-stone-400 font-normal">· {timingSecondary}</span>
+              )}
+            </div>
+
+            {/* Location */}
+            {event.location && (
+              <div className="flex items-center gap-1 text-xs text-stone-400 mt-0.5">
+                <svg width="10" height="10" viewBox="0 0 12 12" fill="currentColor" className="shrink-0">
+                  <path d="M6 1C4.067 1 2.5 2.567 2.5 4.5c0 2.65 3.5 6.5 3.5 6.5s3.5-3.85 3.5-6.5C9.5 2.567 7.933 1 6 1zm0 4.75A1.25 1.25 0 1 1 6 3.25a1.25 1.25 0 0 1 0 2.5z" />
+                </svg>
+                {event.location}
+              </div>
             )}
-          </h3>
-          <div className="text-sm font-medium text-stone-800 mt-1">
-            {timingPrimary}
-            {timingSecondary && (
-              <span className="text-stone-400 font-normal ml-1.5">
-                · {timingSecondary}
+
+            {/* Badges */}
+            <div className="flex flex-wrap gap-1.5 mt-2">
+              <CostBadge cost={event.cost} />
+              <RegistrationBadge reg={event.registration} />
+            </div>
+          </div>
+
+          {/* Score + distance */}
+          <div className="flex flex-col items-end gap-1 shrink-0">
+            <ScoreMeter score={event.score} />
+            {event.distanceMiles !== null && (
+              <span className="text-[11px] font-mono text-stone-400">
+                {event.distanceMiles.toFixed(1)} mi
               </span>
             )}
           </div>
-          {event.location && (
-            <div className="text-sm text-stone-500 mt-0.5">{event.location}</div>
-          )}
-          <div className="mt-2 flex flex-wrap gap-1.5">
-            <CostBadge cost={event.cost} />
-            <RegistrationBadge reg={event.registration} />
-          </div>
         </div>
-        <div className="text-right shrink-0">
-          <div className="text-2xl font-bold text-stone-900">
-            {Math.round(event.score * 100) / 100}
-          </div>
-          {event.distanceMiles !== null && (
-            <div className="text-xs text-stone-500">
-              {event.distanceMiles.toFixed(1)} mi
-            </div>
-          )}
-        </div>
+
+        {/* Description */}
+        {event.description && (
+          <p className="text-sm text-stone-500 mt-3 line-clamp-3 leading-relaxed">
+            {event.description}
+          </p>
+        )}
+
+        {/* Ranking reasons */}
+        {event.reasons.length > 0 && (
+          <ul className="mt-2.5 flex flex-wrap gap-1.5">
+            {event.reasons.map((r, i) => (
+              <li
+                key={i}
+                className="text-[11.5px] px-2.5 py-0.5 rounded-full bg-stone-50 border border-stone-200 text-stone-500"
+              >
+                {r}
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
-
-      {event.description && (
-        <p className="text-sm text-stone-600 mt-3 line-clamp-3 whitespace-pre-line">
-          {event.description}
-        </p>
-      )}
-
-      {event.reasons.length > 0 && (
-        <ul className="mt-3 flex flex-wrap gap-1.5">
-          {event.reasons.map((r, i) => (
-            <li
-              key={i}
-              className="text-xs px-2 py-0.5 rounded-full bg-stone-100 text-stone-700"
-            >
-              {r}
-            </li>
-          ))}
-        </ul>
-      )}
     </article>
   );
 }

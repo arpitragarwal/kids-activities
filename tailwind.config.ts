@@ -5,7 +5,8 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        sans: ["ui-sans-serif", "system-ui", "-apple-system", "Segoe UI", "Roboto"],
+        sans: ["var(--font-dm-sans)", "ui-sans-serif", "system-ui", "-apple-system"],
+        mono: ["var(--font-dm-mono)", "ui-monospace", "monospace"],
       },
     },
   },

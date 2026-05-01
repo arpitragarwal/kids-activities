@@ -35,10 +35,11 @@ export function WeatherBanner({
       : wx.outdoorScore >= 0.4
       ? "Mixed weather — outdoor with caution, indoor backups ranked."
       : "Poor for outside — indoor picks ranked higher.";
+  const currentTime = formatInTimeZone(now, config.timezone, "h:mm a");
   return (
     <div className={`border rounded-lg p-3 mb-4 ${tone}`}>
       <div className="text-sm font-medium">
-        {Math.round(wx.tempF)}°F · {wx.shortForecast} · {wx.precipPct}% precip
+        {currentTime} · {Math.round(wx.tempF)}°F · {wx.shortForecast} · {wx.precipPct}% precip
       </div>
       <div className="text-xs mt-0.5 opacity-80">{advice}</div>
       {fetchedAt && (

@@ -58,10 +58,11 @@ interface RankInput {
 export function rank(events: DbEventRow[], input: RankInput): RankedEvent[] {
   const ranked: RankedEvent[] = [];
   for (const e of events) {
-    // For non-evergreen events that have already ended, skip.
+    // For non-evergreen events that have already ended (or started with no known end), skip.
     const start = new Date(e.start_at);
     const end = e.end_at ? new Date(e.end_at) : null;
     if (!e.evergreen && end && end.getTime() < input.at.getTime()) continue;
+    if (!e.evergreen && !end && start.getTime() < input.at.getTime()) continue;
 
     let score = 1.0;
     const reasons: string[] = [];
