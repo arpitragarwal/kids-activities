@@ -6,8 +6,8 @@ import { config } from "@/lib/config";
 import { getSourceHealth } from "@/lib/sources";
 import { getEffectiveConfig } from "@/lib/userPrefs";
 import { meetsOn } from "@/lib/schedule";
-import { EventCard } from "@/components/EventCard";
 import { ContextHeader } from "@/components/ContextHeader";
+import { EventList } from "@/components/EventList";
 import Link from "next/link";
 
 export const dynamic = "force-dynamic";
@@ -117,49 +117,13 @@ export default async function HomePage({
           </p>
         </div>
       ) : (
-        <>
-          {/* Top picks */}
-          <section className="mb-8">
-            <div className="flex items-center gap-2 mb-3">
-              <span className="inline-flex items-center gap-1.5 text-[11.5px] font-semibold bg-amber-50 text-amber-700 border border-amber-200 rounded-full px-2.5 py-1">
-                <svg width="11" height="11" viewBox="0 0 16 16" fill="currentColor">
-                  <path d="M8 1l1.8 3.6L14 5.4l-3 2.9.7 4.1L8 10.4l-3.7 2 .7-4.1-3-2.9 4.2-.8z" />
-                </svg>
-                Top picks
-              </span>
-            </div>
-            <div className="flex flex-col gap-2.5">
-              {topPicks.map((e) => (
-                <EventCard
-                  key={`${e.source_id}-${e.external_id}`}
-                  event={e}
-                  childAgeMonths={cfg.child.ageMonths}
-                />
-              ))}
-            </div>
-          </section>
-
-          {/* Everything else */}
-          <section>
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="text-[11px] font-semibold uppercase tracking-widest text-stone-400">
-                Everything available today
-              </h2>
-              <span className="text-[11px] font-mono text-stone-400 bg-stone-100 px-2 py-0.5 rounded-full">
-                {rest.length}
-              </span>
-            </div>
-            <div className="flex flex-col gap-2.5">
-              {rest.map((e) => (
-                <EventCard
-                  key={`${e.source_id}-${e.external_id}`}
-                  event={e}
-                  childAgeMonths={cfg.child.ageMonths}
-                />
-              ))}
-            </div>
-          </section>
-        </>
+        <EventList
+          topPicks={topPicks}
+          rest={rest}
+          childAgeMonths={cfg.child.ageMonths}
+          homeLat={cfg.home.lat}
+          homeLng={cfg.home.lng}
+        />
       )}
     </main>
   );
