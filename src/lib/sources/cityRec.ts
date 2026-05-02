@@ -184,8 +184,8 @@ function makeCityRecSource(cfg: CityRecConfig): SourceDefinition {
           body: { activity_items: ActivityItem[] };
           headers: { page_info: { total_page: number } };
         };
-        allItems.push(...json.body.activity_items);
-        if (page >= json.headers.page_info.total_page) break;
+        allItems.push(...(json.body.activity_items ?? []));
+        if (page >= (json.headers?.page_info?.total_page ?? 1)) break;
         page++;
       }
 
