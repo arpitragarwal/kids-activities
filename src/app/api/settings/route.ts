@@ -11,9 +11,10 @@ interface Geo {
 }
 
 async function geocode(query: string): Promise<Geo> {
-  // Bias toward Mountain View / SF Bay Area by appending the region if the
-  // user typed only a street address.
-  const biased = /mountain view|ca|california/i.test(query) ? query : `${query}, Mountain View, CA`;
+  // Only append Bay Area context when the input looks like a bare street (no city/state).
+  // A bare street has no comma and no state abbreviation.
+  const looksLikeBareStreet = !query.includes(",") && !/\b(ca|california|sf|san francisco|san jose|oakland)\b/i.test(query);
+  const biased = looksLikeBareStreet ? `${query}, San Francisco Bay Area, CA` : query;
   const url =
     `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=` +
     encodeURIComponent(biased);
