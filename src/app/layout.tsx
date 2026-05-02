@@ -2,6 +2,7 @@ import "./globals.css";
 import type { Metadata } from "next";
 import { DM_Sans, DM_Mono } from "next/font/google";
 import Link from "next/link";
+import { SOURCES } from "@/lib/sources";
 
 const dmSans = DM_Sans({
   subsets: ["latin"],
@@ -44,8 +45,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               </div>
               <span className="text-[17px] font-semibold tracking-tight">Kids activities near me</span>
             </Link>
-            <Link href="/health" className="text-[12px] text-stone-400 hover:text-stone-600 transition-colors">
+            <Link href="/health" className="flex items-center gap-1.5 text-[12px] text-stone-400 hover:text-stone-600 transition-colors">
               Sources
+              <span className="font-mono text-[10px] bg-stone-100 text-stone-500 rounded px-1 py-0.5">{SOURCES.length}</span>
             </Link>
           </header>
           {children}

@@ -144,13 +144,25 @@ export default async function HealthPage() {
   ]);
 
   const byId = new Map(health.map((h) => [h.id, h]));
+  const okCount = health.filter((h) => h.status === "ok").length;
+  const brokenCount = health.filter((h) => h.status === "broken").length;
+  const neverCount = health.filter((h) => h.status === "never_run").length;
 
   return (
     <main>
       <div className="flex items-center justify-between mb-5">
         <div>
-          <h1 className="text-[15px] font-semibold">Source health</h1>
-          <p className="text-[12px] text-stone-400 mt-0.5">Refreshes hourly via cron</p>
+          <h1 className="text-[15px] font-semibold">
+            Source health
+            <span className="ml-2 font-mono text-[12px] font-normal text-stone-400">{health.length} sources</span>
+          </h1>
+          <div className="flex items-center gap-2 mt-1 text-[12px]">
+            <span className="text-emerald-600">{okCount} ok</span>
+            {brokenCount > 0 && <span className="text-red-500">{brokenCount} broken</span>}
+            {neverCount > 0 && <span className="text-stone-400">{neverCount} never run</span>}
+            <span className="text-stone-300">·</span>
+            <span className="text-stone-400">Refreshes hourly</span>
+          </div>
         </div>
         <form action="/api/refresh" method="post">
           <button
