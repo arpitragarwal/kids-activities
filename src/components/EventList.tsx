@@ -181,7 +181,7 @@ export function EventList({
               ← Prev
             </button>
             <span className="text-[12px] text-stone-400">
-              {page} / {totalPages}
+              {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, filteredAll.length)} of {filteredAll.length}
             </span>
             <button
               type="button"
