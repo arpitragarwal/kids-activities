@@ -28,7 +28,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" className={`${dmSans.variable} ${dmMono.variable}`}>
       <body className="font-sans antialiased">
         <div className="max-w-[680px] mx-auto px-5 pb-16">
-          <header className="flex items-center py-5 border-b border-stone-200 mb-6">
+          <header className="flex items-center justify-between py-5 border-b border-stone-200 mb-6">
             <Link href="/" className="flex items-center gap-2 text-stone-900 no-underline">
               <div className="w-[30px] h-[30px] bg-[#4a6fa5] rounded-lg flex items-center justify-center shrink-0">
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
@@ -44,14 +44,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               </div>
               <span className="text-[17px] font-semibold tracking-tight">Kids activities near me</span>
             </Link>
+            <Link href="/health" className="text-[12px] text-stone-400 hover:text-stone-600 transition-colors">
+              Sources
+            </Link>
           </header>
           {children}
           <footer className="mt-12 pt-4 border-t border-stone-200 text-xs text-stone-400 flex items-center justify-between">
             <span>Live data — refreshed hourly via cron.</span>
-            <div className="flex items-center gap-3">
-              <Link href="/health" className="hover:text-stone-600 transition-colors">Sources</Link>
-              <a href="/api/refresh" className="hover:text-stone-600 transition-colors">Refresh now →</a>
-            </div>
+            <a href="/api/refresh" className="hover:text-stone-600 transition-colors">Refresh now →</a>
           </footer>
         </div>
       </body>

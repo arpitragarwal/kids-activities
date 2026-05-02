@@ -26,14 +26,6 @@ function PersonIcon() {
   );
 }
 
-function EditIcon() {
-  return (
-    <svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round" aria-hidden="true">
-      <path d="M8.5 1.5l2 2-7 7H1.5v-2l7-7z" />
-    </svg>
-  );
-}
-
 // ─── Weather helpers ──────────────────────────────────────────────────────
 
 function weatherIcon(outdoorScore: number, precipPct: number): string {
@@ -171,36 +163,23 @@ function ProfileChips({
   addrDisplay,
   editing,
   onEdit,
-  saved,
 }: {
   ageLabel: string;
   addrDisplay: string;
   editing: boolean;
   onEdit: () => void;
-  saved: boolean;
 }) {
+  const chipCls = "inline-flex items-center gap-1.5 text-xs font-medium text-stone-600 bg-white border rounded-full px-2.5 py-1 transition-colors cursor-pointer select-none " +
+    (editing ? "border-stone-400 bg-stone-50" : "border-stone-200 hover:border-stone-400 hover:bg-stone-50");
   return (
-    <div className="flex flex-col items-end gap-2 shrink-0">
-      <div className="flex gap-1.5 flex-wrap justify-end">
-        <span className="inline-flex items-center gap-1.5 text-xs font-medium text-stone-600 bg-white border border-stone-200 rounded-full px-2.5 py-1">
-          <PersonIcon />
-          {ageLabel}
-        </span>
-        <span
-          className="inline-flex items-center gap-1.5 text-xs font-medium text-stone-600 bg-white border border-stone-200 rounded-full px-2.5 py-1 max-w-[180px] truncate"
-          title={addrDisplay}
-        >
-          <PinIcon />
-          {addrDisplay}
-        </span>
-      </div>
-      <button
-        type="button"
-        onClick={onEdit}
-        className="flex items-center gap-1 text-[11px] text-stone-400 hover:text-stone-600 transition-colors"
-      >
-        <EditIcon />
-        {editing ? "Cancel" : saved ? "Saved ✓" : "Edit profile"}
+    <div className="flex gap-1.5 flex-wrap justify-end shrink-0">
+      <button type="button" onClick={onEdit} className={chipCls}>
+        <PersonIcon />
+        {ageLabel}
+      </button>
+      <button type="button" onClick={onEdit} className={`${chipCls} max-w-[180px] truncate`} title={addrDisplay}>
+        <PinIcon />
+        {addrDisplay}
       </button>
     </div>
   );
@@ -237,8 +216,6 @@ export function ContextHeader({
   const { years, months } = splitYearsMonths(cfg.child.ageMonths);
   const ageLabel = months > 0 ? `${years}y ${months}m old` : `${years}y old`;
 
-  const saved = status === "saved" && !editing;
-
   if (!wx) {
     return (
       <div className="pb-4 border-b border-stone-200 mb-5">
@@ -258,7 +235,6 @@ export function ContextHeader({
             addrDisplay={addrDisplay}
             editing={editing}
             onEdit={() => setEditing((v) => !v)}
-            saved={saved}
           />
         </div>
         {editing && (
@@ -306,7 +282,6 @@ export function ContextHeader({
           addrDisplay={addrDisplay}
           editing={editing}
           onEdit={() => setEditing((v) => !v)}
-          saved={saved}
         />
       </div>
 
