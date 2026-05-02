@@ -85,11 +85,14 @@ export default async function HomePage({
       buckets.get(k)?.push(e);
       continue;
     }
-    if (e.source_id === "cityRec" && e.schedule_label) {
+    if (e.source_id !== "parks" && e.schedule_label) {
       const sched = parseScheduleLabel(e.schedule_label);
       if (sched.days.length > 0) {
+        const DOW: Record<string, number> = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 };
         for (let i = 0; i < dayDates.length; i++) {
-          if (sched.days.includes(dayDates[i].getDay())) {
+          const abbr = new Intl.DateTimeFormat("en-US", { timeZone: config.timezone, weekday: "short" }).format(dayDates[i]);
+          const dow = DOW[abbr] ?? dayDates[i].getDay();
+          if (sched.days.includes(dow)) {
             buckets.get(dayKeys[i])!.push(e);
           }
         }

@@ -67,9 +67,14 @@ export function rank(events: DbEventRow[], input: RankInput): RankedEvent[] {
     let score = 1.0;
     const reasons: string[] = [];
 
-    // --- Age fit ---
+    // Hard age filter: skip events more than 6 months outside the child's range.
     const min = e.age_min_months;
     const max = e.age_max_months;
+    if (min !== null && max !== null) {
+      if (input.childAgeMonths < min - 6 || input.childAgeMonths > max + 6) continue;
+    }
+
+    // --- Age fit ---
     if (min !== null && max !== null) {
       const range = formatAgeRange(min, max);
       if (input.childAgeMonths >= min && input.childAgeMonths <= max) {
@@ -158,14 +163,46 @@ export function rank(events: DbEventRow[], input: RankInput): RankedEvent[] {
         score -= 0.2;
         reasons.push("during typical nap window");
       }
-    } else if (e.source_id === "cityRec" && e.schedule_label) {
+    } else if (e.source_id !== "parks" && e.schedule_label) {
       // Recurring class series: nudge by today's weekday + meeting time.
       const sched = parseScheduleLabel(e.schedule_label);
-      const todayDow = input.at.getDay();
+      // Use Pacific time so day-of-week and hour comparisons match the schedule.
+      const pacificParts = new Intl.DateTimeFormat("en-US", {
+        timeZone: config.timezone,
+        weekday: "short",
+        hour: "numeric",
+        minute: "numeric",
+        hour12: false,
+      }).formatToParts(input.at);
+      const getPart = (type: string) => pacificParts.find((p) => p.type === type)?.value ?? "0";
+      const DOW_MAP: Record<string, number> = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 };
+      const todayDow = DOW_MAP[getPart("weekday")] ?? input.at.getDay();
+      const nowMinutes = parseInt(getPart("hour")) * 60 + parseInt(getPart("minute"));
+
       if (sched.days.length > 0) {
         if (sched.days.includes(todayDow)) {
-          score += 0.25;
-          reasons.push("meets today");
+          const alreadyOver = sched.endMinutes !== null && nowMinutes > sched.endMinutes;
+          const happeningNow =
+            sched.startMinutes !== null &&
+            sched.endMinutes !== null &&
+            nowMinutes >= sched.startMinutes &&
+            nowMinutes <= sched.endMinutes;
+
+          if (happeningNow) {
+            score += 0.5;
+            reasons.push("happening right now");
+          } else if (alreadyOver) {
+            // Already ran today — next occurrence is next week (or next meeting day).
+            const nextAhead = sched.days
+              .map((d) => (d - todayDow + 7) % 7)
+              .filter((n) => n > 0)
+              .sort((a, b) => a - b)[0] ?? 7;
+            score -= 0.3;
+            reasons.push(`already ran today — next in ${nextAhead}d`);
+          } else {
+            score += 0.25;
+            reasons.push("meets today");
+          }
         } else {
           // Find next meeting day distance.
           const ahead = sched.days
