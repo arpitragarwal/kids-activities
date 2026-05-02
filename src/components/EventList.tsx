@@ -48,12 +48,19 @@ export function EventList({
   const [activeIdx, setActiveIdx] = useState(0);
   const [active, setActive] = useState(new Set<FilterId>());
   const [showMap, setShowMap] = useState(false);
+  const [page, setPage] = useState(1);
+
+  const PAGE_SIZE = 10;
 
   const day = days[activeIdx];
   const allEvents = [...day.topPicks, ...day.rest];
   const filteredTop = applyFilters(day.topPicks, active);
   const filteredRest = applyFilters(day.rest, active);
-  const filteredAll = applyFilters(allEvents, active);
+  const filteredAll = [...filteredTop, ...filteredRest];
+  const totalPages = Math.max(1, Math.ceil(filteredAll.length / PAGE_SIZE));
+  const pageItems = filteredAll.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const pageTopPicks = pageItems.filter((e) => filteredTop.includes(e));
+  const pageRest = pageItems.filter((e) => !filteredTop.includes(e));
 
   return (
     <>
@@ -66,7 +73,7 @@ export function EventList({
             <button
               key={d.label}
               type="button"
-              onClick={() => { setActiveIdx(i); setActive(new Set()); }}
+              onClick={() => { setActiveIdx(i); setActive(new Set()); setPage(1); }}
               className={`flex flex-col items-center gap-0.5 py-2 px-1 rounded-lg transition-all duration-100 ${
                 isActive
                   ? "bg-stone-900 text-white"
@@ -96,7 +103,7 @@ export function EventList({
       {/* Filter bar + map toggle */}
       <div className="flex items-start gap-2 mb-5">
         <div className="flex-1">
-          <FilterBar allEvents={allEvents} active={active} onChange={setActive} />
+          <FilterBar allEvents={allEvents} active={active} onChange={(v) => { setActive(v); setPage(1); }} />
         </div>
         <button
           type="button"
@@ -117,52 +124,75 @@ export function EventList({
         <MapView events={filteredAll} homeLat={homeLat} homeLng={homeLng} />
       )}
 
-      {/* Top picks */}
-      <section className="mb-8">
-        <div className="flex items-center gap-2 mb-3">
-          <span className="inline-flex items-center gap-1.5 text-[11.5px] font-semibold bg-amber-50 text-amber-700 border border-amber-200 rounded-full px-2.5 py-1">
-            <svg width="11" height="11" viewBox="0 0 16 16" fill="currentColor">
-              <path d="M8 1l1.8 3.6L14 5.4l-3 2.9.7 4.1L8 10.4l-3.7 2 .7-4.1-3-2.9 4.2-.8z" />
-            </svg>
-            Top picks
-          </span>
-        </div>
-        <div className="flex flex-col gap-2.5">
-          {filteredTop.map((e) => (
-            <EventCard
-              key={`${e.source_id}-${e.external_id}`}
-              event={e}
-              childAgeMonths={childAgeMonths}
-            />
-          ))}
-          {filteredTop.length === 0 && active.size > 0 && (
-            <p className="text-sm text-stone-400 py-2">No top picks match the active filters.</p>
-          )}
-        </div>
-      </section>
+      {/* Top picks (page 1 only) */}
+      {page === 1 && pageTopPicks.length > 0 && (
+        <section className="mb-8">
+          <div className="flex items-center gap-2 mb-3">
+            <span className="inline-flex items-center gap-1.5 text-[11.5px] font-semibold bg-amber-50 text-amber-700 border border-amber-200 rounded-full px-2.5 py-1">
+              <svg width="11" height="11" viewBox="0 0 16 16" fill="currentColor">
+                <path d="M8 1l1.8 3.6L14 5.4l-3 2.9.7 4.1L8 10.4l-3.7 2 .7-4.1-3-2.9 4.2-.8z" />
+              </svg>
+              Top picks
+            </span>
+          </div>
+          <div className="flex flex-col gap-2.5">
+            {pageTopPicks.map((e) => (
+              <EventCard key={`${e.source_id}-${e.external_id}`} event={e} childAgeMonths={childAgeMonths} />
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* Everything else */}
       <section>
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="text-[11px] font-semibold uppercase tracking-widest text-stone-400">
-            Everything available {activeIdx === 0 ? "today" : day.label.split(" ").slice(0, 2).join(" ")}
-          </h2>
-          <span className="text-[11px] font-mono text-stone-400 bg-stone-100 px-2 py-0.5 rounded-full">
-            {filteredRest.length}
-          </span>
-        </div>
-        <div className="flex flex-col gap-2.5">
-          {filteredRest.map((e) => (
-            <EventCard
-              key={`${e.source_id}-${e.external_id}`}
-              event={e}
-              childAgeMonths={childAgeMonths}
-            />
-          ))}
-          {filteredRest.length === 0 && active.size > 0 && (
-            <p className="text-sm text-stone-400 py-2">No events match the active filters.</p>
-          )}
-        </div>
+        {pageRest.length > 0 && (
+          <>
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-[11px] font-semibold uppercase tracking-widest text-stone-400">
+                {page === 1
+                  ? `Everything available ${activeIdx === 0 ? "today" : day.label.split(" ").slice(0, 2).join(" ")}`
+                  : `More activities`}
+              </h2>
+              <span className="text-[11px] font-mono text-stone-400 bg-stone-100 px-2 py-0.5 rounded-full">
+                {filteredAll.length}
+              </span>
+            </div>
+            <div className="flex flex-col gap-2.5">
+              {pageRest.map((e) => (
+                <EventCard key={`${e.source_id}-${e.external_id}`} event={e} childAgeMonths={childAgeMonths} />
+              ))}
+            </div>
+          </>
+        )}
+
+        {filteredAll.length === 0 && active.size > 0 && (
+          <p className="text-sm text-stone-400 py-2">No events match the active filters.</p>
+        )}
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-between mt-6 pt-4 border-t border-stone-100">
+            <button
+              type="button"
+              onClick={() => { setPage((p) => p - 1); window.scrollTo({ top: 0, behavior: "smooth" }); }}
+              disabled={page === 1}
+              className="px-3 py-1.5 rounded-lg border border-stone-200 text-[13px] text-stone-500 hover:bg-stone-50 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+            >
+              ← Prev
+            </button>
+            <span className="text-[12px] text-stone-400">
+              {page} / {totalPages}
+            </span>
+            <button
+              type="button"
+              onClick={() => { setPage((p) => p + 1); window.scrollTo({ top: 0, behavior: "smooth" }); }}
+              disabled={page === totalPages}
+              className="px-3 py-1.5 rounded-lg border border-stone-200 text-[13px] text-stone-500 hover:bg-stone-50 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+            >
+              Next →
+            </button>
+          </div>
+        )}
       </section>
     </>
   );
