@@ -79,11 +79,13 @@ function SettingsDrawer({
   const { years, months } = splitYearsMonths(cfg.child.ageMonths);
   const addrDefault = cfg.home.isDefault ? "" : cfg.home.label;
 
+  const inputCls = "rounded-lg border border-stone-200 bg-white px-2.5 py-1.5 text-sm outline-none focus:border-stone-400 transition-colors";
+
   return (
-    <div className="mt-3 bg-white border border-stone-200 rounded-xl px-4 py-3.5 shadow-md animate-in fade-in slide-in-from-top-1 duration-150">
-      <form action="/api/settings" method="post" className="flex flex-wrap items-end gap-4">
+    <div className="mt-3 bg-white border border-stone-200 rounded-xl px-4 py-3.5 shadow-sm animate-in fade-in slide-in-from-top-1 duration-150">
+      <form action="/api/settings" method="post" className="flex flex-wrap items-end gap-x-4 gap-y-3">
         {/* Age */}
-        <div className="flex flex-col gap-1">
+        <div className="flex flex-col gap-1.5">
           <label className="text-[10.5px] font-semibold uppercase tracking-widest text-stone-400">
             Child&apos;s age
           </label>
@@ -95,9 +97,9 @@ function SettingsDrawer({
               max={20}
               defaultValue={years}
               aria-label="Years"
-              className="w-14 rounded-md border border-stone-300 bg-stone-50 px-2 py-1.5 text-sm outline-none focus:border-stone-500"
+              className={`w-14 text-center ${inputCls}`}
             />
-            <span className="text-xs text-stone-400 font-medium">y</span>
+            <span className="text-xs text-stone-400">y</span>
             <input
               name="ageExtraMonths"
               type="number"
@@ -105,14 +107,14 @@ function SettingsDrawer({
               max={11}
               defaultValue={months}
               aria-label="Months"
-              className="w-14 rounded-md border border-stone-300 bg-stone-50 px-2 py-1.5 text-sm outline-none focus:border-stone-500"
+              className={`w-14 text-center ${inputCls}`}
             />
-            <span className="text-xs text-stone-400 font-medium">m</span>
+            <span className="text-xs text-stone-400">m</span>
           </div>
         </div>
 
         {/* Address */}
-        <div className="flex flex-col gap-1 flex-1 min-w-[200px]">
+        <div className="flex flex-col gap-1.5 flex-1 min-w-[200px]">
           <label className="text-[10.5px] font-semibold uppercase tracking-widest text-stone-400">
             Home address
           </label>
@@ -121,18 +123,17 @@ function SettingsDrawer({
             type="text"
             placeholder="500 Castro St, Mountain View"
             defaultValue={addrDefault}
-            className="w-full rounded-md border border-stone-300 bg-stone-50 px-2 py-1.5 text-sm outline-none focus:border-stone-500"
+            className={`w-full ${inputCls}`}
           />
-          <span className="text-[10px] text-stone-400">Used for distance ranking</span>
         </div>
 
         {/* Actions */}
-        <div className="flex gap-2 items-end pb-[1px]">
+        <div className="flex gap-2">
           <button
             type="submit"
             name="action"
             value="save"
-            className="px-3.5 py-1.5 rounded-md bg-stone-900 text-white text-sm font-medium hover:bg-stone-700 transition-colors"
+            className="px-4 py-1.5 rounded-lg bg-stone-900 text-white text-sm font-medium hover:bg-stone-700 transition-colors"
           >
             Save
           </button>
@@ -140,14 +141,14 @@ function SettingsDrawer({
             type="submit"
             name="action"
             value="reset"
-            className="px-2.5 py-1.5 rounded-md border border-stone-300 text-xs text-stone-600 hover:bg-stone-100 transition-colors"
+            className="px-3 py-1.5 rounded-lg border border-stone-200 text-xs text-stone-600 hover:bg-stone-100 transition-colors"
           >
             Reset
           </button>
           <button
             type="button"
             onClick={onClose}
-            className="px-2.5 py-1.5 rounded-md text-xs text-stone-400 hover:text-stone-600 transition-colors"
+            className="px-2 py-1.5 text-xs text-stone-400 hover:text-stone-600 transition-colors"
           >
             Cancel
           </button>
