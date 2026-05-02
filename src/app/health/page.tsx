@@ -9,12 +9,20 @@ export const dynamic = "force-dynamic";
 
 const GROUPS = [
   {
-    label: "Libraries",
-    ids: ["library", "paloAltoLibrary", "scclLibrary"],
+    label: "South Bay Recreation",
+    ids: ["cityRec", "santaClaraRec", "cupertinoRec", "milpitasRec", "sanJoseRec", "fremontRec"],
   },
   {
-    label: "City Recreation",
-    ids: ["cityRec", "santaClaraRec", "cupertinoRec"],
+    label: "Peninsula & SF Recreation",
+    ids: ["redwoodCityRec", "dalyCityRec", "sfRec"],
+  },
+  {
+    label: "South Bay Libraries",
+    ids: ["library", "sunnyvaleLibrary", "losGatosLibrary", "scclLibrary", "sanJoseLibrary", "alamedaCountyLibrary"],
+  },
+  {
+    label: "Peninsula Libraries",
+    ids: ["paloAltoLibrary", "sanMateoCountyLibrary"],
   },
   {
     label: "Places",
@@ -24,13 +32,27 @@ const GROUPS = [
 
 // Short display names for tiles
 const SHORT_NAME: Record<string, string> = {
-  library:          "Mountain View",
-  paloAltoLibrary:  "Palo Alto",
-  scclLibrary:      "Cupertino + Los Altos",
-  cityRec:          "Mountain View",
-  santaClaraRec:    "Santa Clara",
-  cupertinoRec:     "Cupertino",
-  parks:            "MV Parks",
+  // Recreation
+  cityRec:                "Mountain View",
+  santaClaraRec:          "Santa Clara",
+  cupertinoRec:           "Cupertino",
+  milpitasRec:            "Milpitas",
+  sanJoseRec:             "San Jose",
+  fremontRec:             "Fremont",
+  redwoodCityRec:         "Redwood City",
+  dalyCityRec:            "Daly City",
+  sfRec:                  "San Francisco",
+  // Libraries
+  library:                "Mountain View",
+  sunnyvaleLibrary:       "Sunnyvale",
+  losGatosLibrary:        "Los Gatos",
+  scclLibrary:            "Cupertino/Milpitas/LA",
+  sanJoseLibrary:         "San Jose",
+  alamedaCountyLibrary:   "Fremont/Newark",
+  paloAltoLibrary:        "Palo Alto",
+  sanMateoCountyLibrary:  "San Mateo Co.",
+  // Places
+  parks:                  "MV Parks",
 };
 
 // ─── Status styles ────────────────────────────────────────────────────────

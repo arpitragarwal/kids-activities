@@ -3,6 +3,14 @@ import type { RankedEvent } from "@/lib/rank";
 import { formatAgeRange } from "@/lib/age";
 import { config } from "@/lib/config";
 
+// ─── Helpers ──────────────────────────────────────────────────────────────
+
+const SOURCE_LABEL: Record<string, string> = {
+  library: "Library",
+  cityRec: "City Rec",
+  parks: "Parks",
+};
+
 function fmt(d: Date, pattern: string) {
   return formatInTimeZone(d, config.timezone, pattern);
 }
@@ -11,15 +19,19 @@ function fmt(d: Date, pattern: string) {
 
 type AgeFit = "fit" | "borderline" | "out" | "unknown";
 
-function getAgeFit(event: RankedEvent, childAgeMonths: number): AgeFit {
+function getAgeFit(
+  event: RankedEvent,
+  childAgeMonths: number,
+): AgeFit {
   const { age_min_months: min, age_max_months: max } = event;
   if (min === null && max === null) return "unknown";
   if (childAgeMonths >= min! && childAgeMonths <= max!) return "fit";
-  const off = childAgeMonths < min! ? min! - childAgeMonths : childAgeMonths - max!;
+  const off =
+    childAgeMonths < min! ? min! - childAgeMonths : childAgeMonths - max!;
   return off <= 6 ? "borderline" : "out";
 }
 
-const AGE_FIT_RING: Record<AgeFit, string> = {
+const AGE_FIT_STYLES: Record<AgeFit, string> = {
   fit:        "border-emerald-400 bg-emerald-50",
   borderline: "border-amber-400 bg-amber-50",
   out:        "border-stone-300 bg-transparent",
@@ -36,15 +48,15 @@ const AGE_FIT_TITLE: Record<AgeFit, string> = {
 function AgeFitDot({ fit }: { fit: AgeFit }) {
   return (
     <span
-      className={`inline-block w-2.5 h-2.5 rounded-full border-2 shrink-0 ${AGE_FIT_RING[fit]}`}
+      className={`inline-block w-2.5 h-2.5 rounded-full border-2 shrink-0 ${AGE_FIT_STYLES[fit]}`}
       title={AGE_FIT_TITLE[fit]}
     />
   );
 }
 
-// ─── Indoorness ───────────────────────────────────────────────────────────
+// ─── Indoorness accent bar ─────────────────────────────────────────────────
 
-const ACCENT_BAR: Record<string, string> = {
+const ACCENT_COLORS: Record<string, string> = {
   indoor:  "bg-sky-400",
   outdoor: "bg-emerald-500",
   either:  "bg-amber-400",
@@ -70,7 +82,10 @@ function ScoreMeter({ score }: { score: number }) {
         {score.toFixed(1)}
       </span>
       <div className="w-10 h-1 rounded-full bg-stone-100 overflow-hidden">
-        <div className={`h-full rounded-full ${barColor}`} style={{ width: `${pct}%` }} />
+        <div
+          className={`h-full rounded-full ${barColor}`}
+          style={{ width: `${pct}%` }}
+        />
       </div>
     </div>
   );
@@ -95,16 +110,16 @@ function CostBadge({ cost }: { cost: string }) {
 
 function RegistrationBadge({ reg }: { reg: RankedEvent["registration"] }) {
   const styles: Record<string, string> = {
-    required:  "bg-rose-50 text-rose-700 border-rose-200",
+    required: "bg-rose-50 text-rose-700 border-rose-200",
     "drop-in": "bg-sky-50 text-sky-700 border-sky-200",
     "walk-in": "bg-stone-100 text-stone-600 border-stone-200",
-    unknown:   "bg-stone-50 text-stone-400 border-stone-200",
+    unknown: "bg-stone-50 text-stone-400 border-stone-200",
   };
   const labels: Record<string, string> = {
-    required:  "Signup required",
+    required: "Signup required",
     "drop-in": "Drop-in OK",
     "walk-in": "Walk-in",
-    unknown:   "Signup unknown",
+    unknown: "Signup unknown",
   };
   return (
     <span className={`text-[11px] px-2 py-0.5 rounded border font-medium ${styles[reg]}`}>
@@ -113,32 +128,6 @@ function RegistrationBadge({ reg }: { reg: RankedEvent["registration"] }) {
   );
 }
 
-// ─── Source label ─────────────────────────────────────────────────────────
-
-const SOURCE_LABEL: Record<string, string> = {
-  // Recreation
-  cityRec:               "City Rec",
-  santaClaraRec:         "City Rec",
-  cupertinoRec:          "City Rec",
-  milpitasRec:           "City Rec",
-  sanJoseRec:            "City Rec",
-  fremontRec:            "City Rec",
-  redwoodCityRec:        "City Rec",
-  dalyCityRec:           "City Rec",
-  sfRec:                 "City Rec",
-  // Libraries
-  library:               "Library",
-  sunnyvaleLibrary:      "Library",
-  losGatosLibrary:       "Library",
-  paloAltoLibrary:       "Library",
-  scclLibrary:           "Library",
-  sanJoseLibrary:        "Library",
-  alamedaCountyLibrary:  "Library",
-  sanMateoCountyLibrary: "Library",
-  // Places
-  parks:                 "Parks",
-};
-
 // ─── EventCard ────────────────────────────────────────────────────────────
 
 export function EventCard({
@@ -146,6 +135,7 @@ export function EventCard({
   childAgeMonths,
 }: {
   event: RankedEvent;
+  /** Pass cfg.child.ageMonths for age-fit coloring. */
   childAgeMonths?: number;
 }) {
   const start = new Date(event.start_at);
@@ -157,7 +147,7 @@ export function EventCard({
 
   if (event.evergreen && event.source_id === "parks") {
     timingPrimary = "Open anytime";
-  } else if (event.evergreen && event.source_id !== "parks") {
+  } else if (event.evergreen && event.source_id === "cityRec") {
     if (event.schedule_label) {
       timingPrimary = event.schedule_label;
       timingSecondary = end
@@ -173,26 +163,32 @@ export function EventCard({
     timingPrimary = end
       ? `${fmt(start, "EEE MMM d")} · ${fmt(start, "h:mm a")} – ${fmt(end, "h:mm a")}`
       : `${fmt(start, "EEE MMM d")} · ${fmt(start, "h:mm a")}`;
-    const minutes = end ? Math.round((end.getTime() - start.getTime()) / 60000) : null;
+    const minutes = end
+      ? Math.round((end.getTime() - start.getTime()) / 60000)
+      : null;
     if (minutes && minutes > 0) timingSecondary = `${minutes} min`;
   }
 
-  // ── Age fit ──
-  const ageFit: AgeFit = childAgeMonths !== undefined ? getAgeFit(event, childAgeMonths) : "unknown";
+  // ── Age ──
+  const ageFit =
+    childAgeMonths !== undefined ? getAgeFit(event, childAgeMonths) : "unknown";
   const ageRange =
     event.age_min_months !== null && event.age_max_months !== null
       ? formatAgeRange(event.age_min_months, event.age_max_months)
       : null;
 
+  const accentBar = ACCENT_COLORS[event.indoorness] ?? "bg-stone-300";
   const indoorLabel =
-    event.indoorness === "indoor" ? "Indoor" :
-    event.indoorness === "outdoor" ? "Outdoor" :
-    "In/Out";
+    event.indoorness === "indoor"
+      ? "Indoor"
+      : event.indoorness === "outdoor"
+      ? "Outdoor"
+      : "In/Out";
 
   return (
     <article className="relative bg-white border border-stone-200 rounded-xl overflow-hidden shadow-sm hover:shadow-md hover:-translate-y-px transition-all duration-150">
-      {/* Left accent bar — color by indoorness */}
-      <div className={`absolute left-0 top-0 bottom-0 w-[3px] ${ACCENT_BAR[event.indoorness] ?? "bg-stone-300"}`} />
+      {/* Left accent bar */}
+      <div className={`absolute left-0 top-0 bottom-0 w-[3px] ${accentBar}`} />
 
       <div className="pl-4 pr-4 pt-3.5 pb-3.5">
         <div className="flex items-start justify-between gap-3">
@@ -273,7 +269,7 @@ export function EventCard({
 
         {/* Description */}
         {event.description && (
-          <p className="text-sm text-stone-500 mt-3 line-clamp-3 leading-relaxed">
+          <p className="text-sm text-stone-500 mt-3 line-clamp-3 whitespace-pre-line leading-relaxed">
             {event.description}
           </p>
         )}
@@ -284,7 +280,7 @@ export function EventCard({
             {event.reasons.map((r, i) => (
               <li
                 key={i}
-                className="text-[11.5px] px-2.5 py-0.5 rounded-full bg-stone-50 border border-stone-200 text-stone-500"
+                className="text-[11.5px] px-2.5 py-0.5 rounded-full bg-stone-50 border border-stone-200 text-stone-600"
               >
                 {r}
               </li>

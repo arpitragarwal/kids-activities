@@ -249,6 +249,7 @@ function makeCityRecSource(cfg: CityRecConfig): SourceDefinition {
 
 // ─── City instances ────────────────────────────────────────────────────────
 
+// Mountain View
 export const cityRecSource = makeCityRecSource({
   id: "cityRec",
   name: "City of MV Recreation",
@@ -289,5 +290,89 @@ export const cupertinoRecSource = makeCityRecSource({
     "monta vista rec":                { lat: 37.3195, lng: -122.0602 },
     "jollyman park":                  { lat: 37.3175, lng: -122.0444 },
     "growing iq":                     { lat: 37.3228, lng: -122.0162 },
+  },
+});
+
+// San Jose
+export const sanJoseRecSource = makeCityRecSource({
+  id: "sanJoseRec",
+  name: "City of San Jose Recreation",
+  slug: "sanjoseparksandrec",
+  venueCoords: {
+    "almaden":                        { lat: 37.2436, lng: -121.8876 },
+    "berryessa":                      { lat: 37.3747, lng: -121.8500 },
+    "camden":                         { lat: 37.2601, lng: -121.9398 },
+    "willow glen":                    { lat: 37.3082, lng: -121.8855 },
+    "alum rock":                      { lat: 37.3721, lng: -121.8266 },
+    "communications hill":            { lat: 37.2910, lng: -121.8572 },
+    "kelley park":                    { lat: 37.3186, lng: -121.8449 },
+  },
+});
+
+// San Francisco
+export const sfRecSource = makeCityRecSource({
+  id: "sfRec",
+  name: "SF Recreation & Parks",
+  slug: "sfrecpark",
+  venueCoords: {
+    "mission":                        { lat: 37.7644, lng: -122.4194 },
+    "richmond":                       { lat: 37.7786, lng: -122.4780 },
+    "sunset":                         { lat: 37.7500, lng: -122.4900 },
+    "marina":                         { lat: 37.8023, lng: -122.4393 },
+    "potrero":                        { lat: 37.7572, lng: -122.4031 },
+    "excelsior":                      { lat: 37.7219, lng: -122.4364 },
+    "chinatown":                      { lat: 37.7941, lng: -122.4078 },
+    "visitacion valley":              { lat: 37.7145, lng: -122.4086 },
+  },
+});
+
+// Fremont
+export const fremontRecSource = makeCityRecSource({
+  id: "fremontRec",
+  name: "City of Fremont Recreation",
+  slug: "fremont",
+  venueCoords: {
+    "lake elizabeth":                 { lat: 37.5605, lng: -122.0069 },
+    "central park":                   { lat: 37.5485, lng: -121.9886 },
+    "niles":                          { lat: 37.5757, lng: -121.9769 },
+    "irvington":                      { lat: 37.5261, lng: -121.9625 },
+    "warm springs":                   { lat: 37.4979, lng: -121.9285 },
+  },
+});
+
+// Milpitas
+export const milpitasRecSource = makeCityRecSource({
+  id: "milpitasRec",
+  name: "City of Milpitas Recreation",
+  slug: "milpitasrec",
+  venueCoords: {
+    "milpitas community center":      { lat: 37.4358, lng: -121.8987 },
+    "sr. center":                     { lat: 37.4358, lng: -121.8987 },
+    "library":                        { lat: 37.4368, lng: -121.9002 },
+  },
+});
+
+// Redwood City
+export const redwoodCityRecSource = makeCityRecSource({
+  id: "redwoodCityRec",
+  name: "City of Redwood City Recreation",
+  slug: "rwcpark",
+  venueCoords: {
+    "stulsaft":                       { lat: 37.4869, lng: -122.2259 },
+    "veterans":                       { lat: 37.4852, lng: -122.2366 },
+    "downtown":                       { lat: 37.4852, lng: -122.2364 },
+    "jersey":                         { lat: 37.4929, lng: -122.2158 },
+  },
+});
+
+// Daly City
+export const dalyCityRecSource = makeCityRecSource({
+  id: "dalyCityRec",
+  name: "City of Daly City Recreation",
+  slug: "dalycity",
+  venueCoords: {
+    "daly city community center":     { lat: 37.6759, lng: -122.4631 },
+    "community center":               { lat: 37.6759, lng: -122.4631 },
+    "doelger":                        { lat: 37.6928, lng: -122.4726 },
   },
 });

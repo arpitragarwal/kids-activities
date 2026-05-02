@@ -1,17 +1,38 @@
 import { sql, ensureSchema } from "../db";
 import type { NormalizedEvent, SourceDefinition, SourceHealth } from "../types";
-import { librarySource } from "./library";
-import { cityRecSource, santaClaraRecSource, cupertinoRecSource } from "./cityRec";
-import { paloAltoLibrarySource, scclLibrarySource } from "./bibliocommons";
+import { librarySource, sunnyvaleLibrarySource, losGatosLibrarySource } from "./library";
+import {
+  cityRecSource, santaClaraRecSource, cupertinoRecSource,
+  sanJoseRecSource, sfRecSource, fremontRecSource,
+  milpitasRecSource, redwoodCityRecSource, dalyCityRecSource,
+} from "./cityRec";
+import {
+  paloAltoLibrarySource, scclLibrarySource,
+  sanJoseLibrarySource, alamedaCountyLibrarySource, sanMateoCountyLibrarySource,
+} from "./bibliocommons";
 import { parksSource } from "./parks";
 
 export const SOURCES: SourceDefinition[] = [
-  librarySource,
-  paloAltoLibrarySource,
-  scclLibrarySource,
+  // City Recreation
   cityRecSource,
   santaClaraRecSource,
   cupertinoRecSource,
+  milpitasRecSource,
+  sanJoseRecSource,
+  fremontRecSource,
+  redwoodCityRecSource,
+  dalyCityRecSource,
+  sfRecSource,
+  // Libraries
+  librarySource,
+  sunnyvaleLibrarySource,
+  losGatosLibrarySource,
+  paloAltoLibrarySource,
+  scclLibrarySource,
+  sanJoseLibrarySource,
+  alamedaCountyLibrarySource,
+  sanMateoCountyLibrarySource,
+  // Places
   parksSource,
 ];
 

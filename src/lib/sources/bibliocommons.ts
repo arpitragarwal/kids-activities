@@ -179,12 +179,39 @@ export const paloAltoLibrarySource = makeBiblioCommonsSource({
   defaultLng: -122.1430,
 });
 
-// Santa Clara County Library District — filter to our nearby branches only.
+// Santa Clara County Library District — South Bay branches.
 export const scclLibrarySource = makeBiblioCommonsSource({
   id: "scclLibrary",
   name: "Santa Clara County Library",
   domain: "sccl",
   defaultLat: 37.3220,
   defaultLng: -122.0441,
-  branchFilter: ["Cupertino Library", "Los Altos Library"],
+  branchFilter: ["Cupertino Library", "Los Altos Library", "Milpitas Library", "Campbell Library"],
+});
+
+// San Jose Public Library
+export const sanJoseLibrarySource = makeBiblioCommonsSource({
+  id: "sanJoseLibrary",
+  name: "San Jose Public Library",
+  domain: "sjpl",
+  defaultLat: 37.3355,
+  defaultLng: -121.8864,
+});
+
+// Alameda County Library — covers Fremont, Newark, Union City
+export const alamedaCountyLibrarySource = makeBiblioCommonsSource({
+  id: "alamedaCountyLibrary",
+  name: "Alameda County Library",
+  domain: "aclibrary",
+  defaultLat: 37.5523,
+  defaultLng: -121.9887,
+});
+
+// San Mateo County Library — covers Peninsula cities
+export const sanMateoCountyLibrarySource = makeBiblioCommonsSource({
+  id: "sanMateoCountyLibrary",
+  name: "San Mateo County Library",
+  domain: "smcl",
+  defaultLat: 37.5630,
+  defaultLng: -122.3255,
 });

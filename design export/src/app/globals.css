@@ -1,0 +1,39 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+}
+
+body {
+  /* Warm off-white — slightly warmer than pure white to reduce harshness */
+  background: #faf9f6;
+  color: #1c1917; /* stone-900 equivalent */
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #d4cfc7; border-radius: 99px; }
+
+/* Smooth font rendering */
+body { -webkit-font-smoothing: antialiased; }
+
+/* animate-in utilities (used by SettingsDrawer) — Tailwind v3 doesn't include
+   these by default; add the tailwindcss-animate plugin or use these fallbacks. */
+@keyframes fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes slide-in-from-top-1 {
+  from { transform: translateY(-4px); }
+  to   { transform: translateY(0); }
+}
+.animate-in {
+  animation-fill-mode: both;
+  animation-duration: 150ms;
+}
+.fade-in          { animation-name: fade-in; }
+.slide-in-from-top-1 { animation-name: slide-in-from-top-1; }
+.duration-150     { animation-duration: 150ms; }
