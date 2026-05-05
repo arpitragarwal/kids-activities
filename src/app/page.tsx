@@ -1,4 +1,5 @@
 import { addDays, startOfDay, endOfDay } from "date-fns";
+import { fromZonedTime } from "date-fns-tz";
 import { fetchEventsBetween, rank } from "@/lib/rank";
 import type { RankedEvent } from "@/lib/rank";
 import { getCachedWeather, summarizeForHour } from "@/lib/weather";
@@ -50,8 +51,11 @@ export default async function HomePage({
   const now = new Date();
   const cfg = await getEffectiveConfig();
   const params = await searchParams;
-  const start = startOfDay(now);
-  const end = endOfDay(addDays(now, 6));
+  // Compute start/end in Pacific time so the week strip aligns with the user's day,
+  // not UTC midnight (which is 5 PM Pacific and would show yesterday as "today").
+  const todayPacific = formatInTimeZone(now, config.timezone, "yyyy-MM-dd");
+  const start = fromZonedTime(`${todayPacific}T00:00:00`, config.timezone);
+  const end = endOfDay(addDays(start, 6));
 
   const [{ periods, fetchedAt }, dbEvents, health] = await Promise.all([
     getCachedWeather(),

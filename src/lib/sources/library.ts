@@ -71,6 +71,7 @@ export function makeLibCalSource(cfg: LibCalConfig): SourceDefinition {
           : typeof rawCategories === "string"
           ? rawCategories.split(",").map((s) => s.trim())
           : undefined;
+        if (/^cancel/i.test(summary)) continue;
         if (!isKidsEvent(summary, categories)) continue;
 
         const desc = ((vAny.description as string | undefined) ?? "")
