@@ -57,6 +57,12 @@ export default async function HomePage({
   const start = fromZonedTime(`${todayPacific}T00:00:00`, config.timezone);
   const end = endOfDay(addDays(start, 29));
 
+  // Find Monday of the current week (0=Sun…6=Sat → Mon offset).
+  // start is Pacific midnight expressed as UTC, so getDay() returns the Pacific weekday.
+  const dow = start.getDay();
+  const daysFromMonday = dow === 0 ? 6 : dow - 1; // Mon=0 … Sun=6
+  const weekMondayStart = addDays(start, -daysFromMonday);
+
   const [{ periods, fetchedAt }, dbEvents, health] = await Promise.all([
     getCachedWeather(),
     fetchEventsBetween(start, end),
@@ -70,13 +76,14 @@ export default async function HomePage({
     home: cfg.home,
   });
 
-  // Build 30-day buckets.
+  // Build 6-week (42-day) buckets starting from Monday of current week.
+  const TOTAL_DAYS = 42;
   const dayDates: Date[] = [];
   const dayKeys: string[] = [];
   const buckets = new Map<string, RankedEvent[]>();
 
-  for (let i = 0; i < 30; i++) {
-    const d = addDays(start, i);
+  for (let i = 0; i < TOTAL_DAYS; i++) {
+    const d = addDays(weekMondayStart, i);
     const k = formatInTimeZone(d, config.timezone, "EEE MMM d");
     dayDates.push(d);
     dayKeys.push(k);
@@ -118,6 +125,7 @@ export default async function HomePage({
       label: k,
       abbr: DOW_ABBR[d.getDay()],
       num: d.getDate(),
+      isPast: i < daysFromMonday,
       topPicks,
       rest,
     };
@@ -131,7 +139,7 @@ export default async function HomePage({
   const dateLabel = formatInTimeZone(now, config.timezone, "EEE MMM d");
   const currentTime = formatInTimeZone(now, config.timezone, "h:mm a");
 
-  const totalEvents = days[0].topPicks.length + days[0].rest.length;
+  const totalEvents = days[daysFromMonday].topPicks.length + days[daysFromMonday].rest.length;
 
   return (
     <main>
@@ -174,6 +182,7 @@ export default async function HomePage({
       ) : (
         <EventList
           days={days}
+          initialActiveIdx={daysFromMonday}
           childAgeMonths={cfg.child.ageMonths}
           homeLat={cfg.home.lat}
           homeLng={cfg.home.lng}

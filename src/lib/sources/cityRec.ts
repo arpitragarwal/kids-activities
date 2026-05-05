@@ -109,18 +109,20 @@ interface CityRecConfig {
   id: string;
   name: string;
   slug: string;
+  defaultLat: number;
+  defaultLng: number;
   venueCoords: Record<string, { lat: number; lng: number }>;
 }
 
 function makeCityRecSource(cfg: CityRecConfig): SourceDefinition {
   const API_URL = `https://anc.apm.activecommunities.com/${cfg.slug}/rest/activities/list?locale=en-US`;
 
-  function coordsForVenue(label: string): { lat: number | null; lng: number | null } {
+  function coordsForVenue(label: string): { lat: number; lng: number } {
     const k = label.toLowerCase();
     for (const [name, c] of Object.entries(cfg.venueCoords)) {
       if (k.includes(name)) return c;
     }
-    return { lat: null, lng: null };
+    return { lat: cfg.defaultLat, lng: cfg.defaultLng };
   }
 
   return {
@@ -254,6 +256,8 @@ export const cityRecSource = makeCityRecSource({
   id: "cityRec",
   name: "City of MV Recreation",
   slug: "mountainviewrecreation",
+  defaultLat: 37.3861,
+  defaultLng: -122.0839,
   venueCoords: {
     "mountain view community center": { lat: 37.4014, lng: -122.105 },
     "rengstorff park":                { lat: 37.4014, lng: -122.105 },
@@ -272,6 +276,8 @@ export const santaClaraRecSource = makeCityRecSource({
   id: "santaClaraRec",
   name: "City of Santa Clara Recreation",
   slug: "santaclara",
+  defaultLat: 37.3541,
+  defaultLng: -121.9552,
   venueCoords: {
     "community recreation center":    { lat: 37.3499, lng: -121.9671 },
     "crc":                            { lat: 37.3499, lng: -121.9671 },
@@ -285,6 +291,8 @@ export const cupertinoRecSource = makeCityRecSource({
   id: "cupertinoRec",
   name: "City of Cupertino Recreation",
   slug: "cupertino",
+  defaultLat: 37.3230,
+  defaultLng: -122.0322,
   venueCoords: {
     "quinlan":                        { lat: 37.3218, lng: -122.0436 },
     "monta vista rec":                { lat: 37.3195, lng: -122.0602 },
@@ -298,6 +306,8 @@ export const sanJoseRecSource = makeCityRecSource({
   id: "sanJoseRec",
   name: "City of San Jose Recreation",
   slug: "sanjoseparksandrec",
+  defaultLat: 37.3382,
+  defaultLng: -121.8863,
   venueCoords: {
     "almaden":                        { lat: 37.2436, lng: -121.8876 },
     "berryessa":                      { lat: 37.3747, lng: -121.8500 },
@@ -314,6 +324,8 @@ export const sfRecSource = makeCityRecSource({
   id: "sfRec",
   name: "SF Recreation & Parks",
   slug: "sfrecpark",
+  defaultLat: 37.7749,
+  defaultLng: -122.4194,
   venueCoords: {
     "mission":                        { lat: 37.7644, lng: -122.4194 },
     "richmond":                       { lat: 37.7786, lng: -122.4780 },
@@ -331,6 +343,8 @@ export const fremontRecSource = makeCityRecSource({
   id: "fremontRec",
   name: "City of Fremont Recreation",
   slug: "fremont",
+  defaultLat: 37.5485,
+  defaultLng: -121.9886,
   venueCoords: {
     "lake elizabeth":                 { lat: 37.5605, lng: -122.0069 },
     "central park":                   { lat: 37.5485, lng: -121.9886 },
@@ -345,6 +359,8 @@ export const milpitasRecSource = makeCityRecSource({
   id: "milpitasRec",
   name: "City of Milpitas Recreation",
   slug: "milpitasrec",
+  defaultLat: 37.4323,
+  defaultLng: -121.8996,
   venueCoords: {
     "milpitas community center":      { lat: 37.4358, lng: -121.8987 },
     "sr. center":                     { lat: 37.4358, lng: -121.8987 },
@@ -357,6 +373,8 @@ export const redwoodCityRecSource = makeCityRecSource({
   id: "redwoodCityRec",
   name: "City of Redwood City Recreation",
   slug: "rwcpark",
+  defaultLat: 37.4852,
+  defaultLng: -122.2364,
   venueCoords: {
     "stulsaft":                       { lat: 37.4869, lng: -122.2259 },
     "veterans":                       { lat: 37.4852, lng: -122.2366 },
@@ -370,6 +388,8 @@ export const dalyCityRecSource = makeCityRecSource({
   id: "dalyCityRec",
   name: "City of Daly City Recreation",
   slug: "dalycity",
+  defaultLat: 37.6879,
+  defaultLng: -122.4702,
   venueCoords: {
     "daly city community center":     { lat: 37.6759, lng: -122.4631 },
     "community center":               { lat: 37.6759, lng: -122.4631 },

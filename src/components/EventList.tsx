@@ -18,9 +18,10 @@ const MapView = dynamic(
 );
 
 export interface DayData {
-  label: string;     // "Wed May 1"
-  abbr: string;      // "WE"
-  num: number;       // 1
+  label: string;       // "Wed May 1"
+  abbr: string;        // "WE"
+  num: number;         // 1
+  isPast: boolean;
   topPicks: RankedEvent[];
   rest: RankedEvent[];
 }
@@ -54,16 +55,19 @@ const WEEK_SIZE = 7;
 
 export function EventList({
   days,
+  initialActiveIdx = 0,
   childAgeMonths,
   homeLat,
   homeLng,
 }: {
   days: DayData[];
+  initialActiveIdx?: number;
   childAgeMonths: number;
   homeLat: number;
   homeLng: number;
 }) {
-  const [activeIdx, setActiveIdx] = useState(0);
+  const todayIdx = initialActiveIdx;
+  const [activeIdx, setActiveIdx] = useState(initialActiveIdx);
   const [weekStart, setWeekStart] = useState(0);
   const [active, setActive] = useState(new Set<FilterId>());
   const [showMap, setShowMap] = useState(false);
@@ -143,9 +147,12 @@ export function EventList({
               <button
                 key={d.label}
                 type="button"
+                disabled={d.isPast}
                 onClick={() => { setActiveIdx(globalIdx); setActive(new Set()); setPage(1); }}
                 className={`flex flex-col items-center gap-0.5 py-2 px-1 rounded-lg transition-all duration-100 ${
-                  isActive
+                  d.isPast
+                    ? "opacity-30 cursor-not-allowed text-stone-400"
+                    : isActive
                     ? "bg-stone-900 text-white"
                     : "text-stone-600 hover:bg-stone-100"
                 }`}
@@ -158,7 +165,7 @@ export function EventList({
                 </span>
                 <span
                   className={`w-1.5 h-1.5 rounded-full mt-0.5 ${
-                    hasEvents
+                    hasEvents && !d.isPast
                       ? isActive ? "bg-white" : "bg-[#4a6fa5]"
                       : "opacity-0"
                   }`}
@@ -219,7 +226,7 @@ export function EventList({
             <div className="flex items-center justify-between mb-3">
               <h2 className="text-[11px] font-semibold uppercase tracking-widest text-stone-400">
                 {page === 1
-                  ? `Everything available ${activeIdx === 0 ? "today" : day.label.split(" ").slice(0, 2).join(" ")}`
+                  ? `Everything available ${activeIdx === todayIdx ? "today" : day.label.split(" ").slice(0, 2).join(" ")}`
                   : `More activities`}
               </h2>
               <span className="text-[11px] font-mono text-stone-400 bg-stone-100 px-2 py-0.5 rounded-full">

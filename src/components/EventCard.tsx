@@ -56,26 +56,6 @@ const INDOOR_CHIP: Record<string, string> = {
   either:  "bg-amber-50 text-amber-700 border-amber-200",
 };
 
-// ─── Score meter ──────────────────────────────────────────────────────────
-
-function ScoreMeter({ score }: { score: number }) {
-  const pct = Math.min(100, (score / 3) * 100);
-  const barColor =
-    score >= 2.0 ? "bg-emerald-500" :
-    score >= 1.5 ? "bg-amber-400" :
-    "bg-stone-300";
-  return (
-    <div className="flex flex-col items-end gap-1">
-      <span className="font-mono text-xl font-medium text-stone-900 leading-none">
-        {score.toFixed(1)}
-      </span>
-      <div className="w-10 h-1 rounded-full bg-stone-100 overflow-hidden">
-        <div className={`h-full rounded-full ${barColor}`} style={{ width: `${pct}%` }} />
-      </div>
-    </div>
-  );
-}
-
 // ─── Badges ───────────────────────────────────────────────────────────────
 
 function CostBadge({ cost }: { cost: string }) {
@@ -243,15 +223,30 @@ export function EventCard({
               )}
             </div>
 
-            {/* Location */}
-            {event.location && (
-              <div className="flex items-center gap-1 text-xs text-stone-400 mt-0.5">
-                <svg width="10" height="10" viewBox="0 0 12 12" fill="currentColor" className="shrink-0">
-                  <path d="M6 1C4.067 1 2.5 2.567 2.5 4.5c0 2.65 3.5 6.5 3.5 6.5s3.5-3.85 3.5-6.5C9.5 2.567 7.933 1 6 1zm0 4.75A1.25 1.25 0 1 1 6 3.25a1.25 1.25 0 0 1 0 2.5z" />
-                </svg>
-                {event.location}
-              </div>
-            )}
+            {/* Location + distance */}
+            {event.location && (() => {
+              const mapsUrl = event.lat != null && event.lng != null
+                ? `https://maps.google.com/?q=${event.lat},${event.lng}`
+                : `https://maps.google.com/?q=${encodeURIComponent(event.location)}`;
+              return (
+                <div className="flex items-center gap-1 text-xs text-stone-400 mt-0.5">
+                  <svg width="10" height="10" viewBox="0 0 12 12" fill="currentColor" className="shrink-0">
+                    <path d="M6 1C4.067 1 2.5 2.567 2.5 4.5c0 2.65 3.5 6.5 3.5 6.5s3.5-3.85 3.5-6.5C9.5 2.567 7.933 1 6 1zm0 4.75A1.25 1.25 0 1 1 6 3.25a1.25 1.25 0 0 1 0 2.5z" />
+                  </svg>
+                  <a
+                    href={mapsUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="hover:underline hover:text-stone-600 transition-colors"
+                  >
+                    {event.location}
+                  </a>
+                  {event.distanceMiles != null && (
+                    <span className="text-stone-400">· {event.distanceMiles.toFixed(1)} mi</span>
+                  )}
+                </div>
+              );
+            })()}
 
             {/* Badges */}
             <div className="flex flex-wrap gap-1.5 mt-2">
@@ -260,15 +255,6 @@ export function EventCard({
             </div>
           </div>
 
-          {/* Score + distance */}
-          <div className="flex flex-col items-end gap-1 shrink-0">
-            <ScoreMeter score={event.score} />
-            {event.distanceMiles !== null && (
-              <span className="text-[11px] font-mono text-stone-400">
-                {event.distanceMiles.toFixed(1)} mi
-              </span>
-            )}
-          </div>
         </div>
 
         {/* Description */}
