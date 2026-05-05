@@ -22,11 +22,14 @@ function allCdata(block: string, tag: string): string[] {
 
 // ─── Kids category filters ────────────────────────────────────────────────
 
-// Audience labels used across Palo Alto and SCCL BiblioCommons instances.
+// Audience labels across Palo Alto, SCCL, SJPL, and Alameda County instances.
+// Palo Alto uses: "Babies (under 2)", "Toddlers (18 mos. to 3 yrs)", "Pre-schoolers (3-5)", "Kids (6-11)"
+// SCCL uses: "kids: babies", "kids: toddlers", "kids: preschoolers", "kids: grades k-8"
 const KIDS_AUDIENCES = [
-  "babies & toddlers",
+  "babies",          // matches "Babies (under 2)", "babies & toddlers", etc.
   "toddlers",
   "pre-schoolers",
+  "preschoolers",
   "kids (6-11)",
   "kids: babies",
   "kids: toddlers",
@@ -34,11 +37,13 @@ const KIDS_AUDIENCES = [
   "kids: grades k-8",
   "kids: grades 5-8",
   "kids: family events",
+  "kids storytimes",
+  "storytime",
   "families",
   "family",
 ];
 
-const EXCLUDE_AUDIENCES = ["adults", "seniors", "teens", "tweens", "grades 9-12"];
+const EXCLUDE_AUDIENCES = ["adults", "seniors", "teens (", "tweens", "grades 9-12"];
 
 function isKidsEvent(categories: string[]): boolean {
   const cats = categories.map((c) => c.toLowerCase());
@@ -46,19 +51,38 @@ function isKidsEvent(categories: string[]): boolean {
   return KIDS_AUDIENCES.some((kw) => cats.some((c) => c.includes(kw)));
 }
 
+// Per-category age ranges. Takes the UNION across all matching categories so an
+// event tagged Babies + Toddlers + Pre-schoolers gets 0–60, not just 18–36.
+const AGE_PATTERNS: Array<{ test: (s: string) => boolean; min: number; max: number }> = [
+  { test: (s) => s.includes("babies & toddlers (0-18"),  min: 0,   max: 18  },
+  { test: (s) => s.includes("babies (under 2)"),          min: 0,   max: 24  },
+  { test: (s) => s.includes("babies"),                    min: 0,   max: 24  },
+  { test: (s) => s.includes("kids: babies"),              min: 0,   max: 12  },
+  { test: (s) => s.includes("toddlers (18 mos"),          min: 18,  max: 36  },
+  { test: (s) => s.includes("toddlers (18"),              min: 18,  max: 36  },
+  { test: (s) => s.includes("kids: toddlers"),            min: 12,  max: 36  },
+  { test: (s) => s.includes("pre-schoolers (3-5)"),       min: 36,  max: 60  },
+  { test: (s) => s.includes("preschoolers (3-5)"),        min: 36,  max: 60  },
+  { test: (s) => s.includes("kids: preschoolers"),        min: 36,  max: 60  },
+  { test: (s) => s.includes("kids (6-11)"),               min: 72,  max: 132 },
+  { test: (s) => s.includes("kids: grades k-8"),          min: 60,  max: 168 },
+  { test: (s) => s.includes("kids: grades 5-8"),          min: 120, max: 168 },
+  { test: (s) => s.includes("kids: family") || s.includes("famil"), min: 0, max: 144 },
+];
+
 function ageRangeFromCategories(categories: string[]): { min: number | null; max: number | null } {
-  const joined = categories.join(" ").toLowerCase();
-  if (joined.includes("babies & toddlers (0-18")) return { min: 0, max: 18 };
-  if (joined.includes("kids: babies"))            return { min: 0, max: 12 };
-  if (joined.includes("toddlers (18"))            return { min: 18, max: 36 };
-  if (joined.includes("kids: toddlers"))          return { min: 12, max: 36 };
-  if (joined.includes("pre-schoolers (3-5)"))     return { min: 36, max: 60 };
-  if (joined.includes("kids: preschoolers"))      return { min: 36, max: 60 };
-  if (joined.includes("kids (6-11)"))             return { min: 72, max: 132 };
-  if (joined.includes("kids: grades k-8"))        return { min: 60, max: 168 };
-  if (joined.includes("kids: grades 5-8"))        return { min: 120, max: 168 };
-  if (joined.includes("kids: family") || joined.includes("famil")) return { min: 0, max: 144 };
-  return { min: null, max: null };
+  const cats = categories.map((c) => c.toLowerCase());
+  let min: number | null = null;
+  let max: number | null = null;
+  for (const cat of cats) {
+    for (const p of AGE_PATTERNS) {
+      if (p.test(cat)) {
+        min = min === null ? p.min : Math.min(min, p.min);
+        max = max === null ? p.max : Math.max(max, p.max);
+      }
+    }
+  }
+  return { min, max };
 }
 
 // ─── Factory ──────────────────────────────────────────────────────────────
