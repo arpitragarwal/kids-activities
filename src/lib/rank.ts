@@ -58,14 +58,22 @@ interface RankInput {
 export function rank(events: DbEventRow[], input: RankInput): RankedEvent[] {
   const ranked: RankedEvent[] = [];
   for (const e of events) {
-    // For non-evergreen events that have already ended (or started with no known end), skip.
     const start = new Date(e.start_at);
     const end = e.end_at ? new Date(e.end_at) : null;
-    if (!e.evergreen && end && end.getTime() < input.at.getTime()) continue;
-    if (!e.evergreen && !end && start.getTime() < input.at.getTime()) continue;
 
     let score = 1.0;
     const reasons: string[] = [];
+
+    // Penalise ended events so they sink to the bottom but remain visible.
+    if (!e.evergreen) {
+      if (end && end.getTime() < input.at.getTime()) {
+        score -= 2.0;
+        reasons.push("already ended");
+      } else if (!end && start.getTime() < input.at.getTime()) {
+        score -= 0.5;
+        reasons.push("may have ended");
+      }
+    }
 
     // Hard age filter: skip events more than 6 months outside the child's range.
     const min = e.age_min_months;

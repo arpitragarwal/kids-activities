@@ -157,6 +157,11 @@ export function EventCard({
     if (minutes && minutes > 0) timingSecondary = `${minutes} min`;
   }
 
+  // ── Time status ──
+  const now = new Date();
+  const hasEnded = !event.evergreen && end !== null && end < now;
+  const isOngoing = !event.evergreen && start <= now && (end === null || end >= now);
+
   // ── Age fit ──
   const ageFit: AgeFit = childAgeMonths !== undefined ? getAgeFit(event, childAgeMonths) : "unknown";
   const ageRange =
@@ -252,6 +257,16 @@ export function EventCard({
             <div className="flex flex-wrap gap-1.5 mt-2">
               <CostBadge cost={event.cost} />
               <RegistrationBadge reg={event.registration} />
+              {isOngoing && (
+                <span className="text-[11.5px] font-medium px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                  Happening now
+                </span>
+              )}
+              {hasEnded && (
+                <span className="text-[11.5px] font-medium px-2 py-0.5 rounded-full bg-stone-100 text-stone-400 border border-stone-200">
+                  Ended
+                </span>
+              )}
             </div>
           </div>
 

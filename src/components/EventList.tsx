@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { FilterBar, applyFilters } from "@/components/FilterBar";
 import type { FilterId } from "@/components/FilterBar";
 import dynamic from "next/dynamic";
@@ -53,6 +53,120 @@ function ChevronRight() {
 
 const WEEK_SIZE = 7;
 
+// ─── Time filter ──────────────────────────────────────────────────────────
+
+const TIME_OPTIONS = [6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22];
+
+function fmtHour(h: number): string {
+  if (h === 12) return "12pm";
+  if (h === 0 || h === 24) return "12am";
+  return h > 12 ? `${h - 12}pm` : `${h}am`;
+}
+
+function getStartHourPacific(isoString: string): number {
+  return parseInt(
+    new Intl.DateTimeFormat("en-US", {
+      timeZone: "America/Los_Angeles",
+      hour: "numeric",
+      hour12: false,
+    }).format(new Date(isoString))
+  );
+}
+
+function applyTimeFilter(
+  events: RankedEvent[],
+  after: number | null,
+  before: number | null,
+): RankedEvent[] {
+  if (after === null && before === null) return events;
+  return events.filter((e) => {
+    if (e.evergreen) return true;
+    const h = getStartHourPacific(e.start_at);
+    if (after !== null && h < after) return false;
+    if (before !== null && h >= before) return false;
+    return true;
+  });
+}
+
+function ChevronDown() {
+  return (
+    <svg width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden="true">
+      <path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function TimeDropdown({
+  label,
+  value,
+  options,
+  onChange,
+}: {
+  label: string;
+  value: number | null;
+  options: number[];
+  onChange: (v: number | null) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [open]);
+
+  const isActive = value !== null;
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full border text-[12.5px] font-medium transition-all duration-100 ${
+          isActive
+            ? "bg-stone-900 border-stone-900 text-white"
+            : open
+            ? "bg-stone-50 border-stone-400 text-stone-700"
+            : "bg-white border-stone-200 text-stone-600 hover:border-stone-400"
+        }`}
+      >
+        {isActive ? fmtHour(value!) : <span className="text-stone-500">{label}</span>}
+        <ChevronDown />
+      </button>
+
+      {open && (
+        <div className="absolute top-full mt-1.5 left-0 bg-white border border-stone-200 rounded-xl shadow-lg z-20 min-w-[100px] py-1 overflow-hidden max-h-52 overflow-y-auto">
+          <button
+            type="button"
+            onClick={() => { onChange(null); setOpen(false); }}
+            className={`w-full text-left px-3 py-1.5 text-[13px] transition-colors ${
+              value === null ? "bg-stone-50 font-semibold text-stone-900" : "text-stone-600 hover:bg-stone-50"
+            }`}
+          >
+            Any
+          </button>
+          {options.map((h) => (
+            <button
+              key={h}
+              type="button"
+              onClick={() => { onChange(h); setOpen(false); }}
+              className={`w-full text-left px-3 py-1.5 text-[13px] transition-colors ${
+                value === h ? "bg-stone-50 font-semibold text-stone-900" : "text-stone-600 hover:bg-stone-50"
+              }`}
+            >
+              {fmtHour(h)}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function EventList({
   days,
   initialActiveIdx = 0,
@@ -70,8 +184,17 @@ export function EventList({
   const [activeIdx, setActiveIdx] = useState(initialActiveIdx);
   const [weekStart, setWeekStart] = useState(0);
   const [active, setActive] = useState(new Set<FilterId>());
+  const [timeAfter, setTimeAfter] = useState<number | null>(null);
+  const [timeBefore, setTimeBefore] = useState<number | null>(null);
   const [showMap, setShowMap] = useState(false);
   const [page, setPage] = useState(1);
+
+  function resetAllFilters() {
+    setActive(new Set());
+    setTimeAfter(null);
+    setTimeBefore(null);
+    setPage(1);
+  }
 
   const PAGE_SIZE = 10;
   const maxWeekStart = Math.max(0, days.length - WEEK_SIZE);
@@ -86,22 +209,20 @@ export function EventList({
     const next = Math.max(0, weekStart - WEEK_SIZE);
     setWeekStart(next);
     setActiveIdx(next);
-    setActive(new Set());
-    setPage(1);
+    resetAllFilters();
   }
 
   function goNextWeek() {
     const next = Math.min(weekStart + WEEK_SIZE, maxWeekStart);
     setWeekStart(next);
     setActiveIdx(next);
-    setActive(new Set());
-    setPage(1);
+    resetAllFilters();
   }
 
   const day = days[activeIdx];
   const allEvents = [...day.topPicks, ...day.rest];
-  const filteredTop = applyFilters(day.topPicks, active);
-  const filteredRest = applyFilters(day.rest, active);
+  const filteredTop = applyTimeFilter(applyFilters(day.topPicks, active), timeAfter, timeBefore);
+  const filteredRest = applyTimeFilter(applyFilters(day.rest, active), timeAfter, timeBefore);
   const filteredAll = [...filteredTop, ...filteredRest];
   const totalPages = Math.max(1, Math.ceil(filteredAll.length / PAGE_SIZE));
   const pageItems = filteredAll.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
@@ -148,7 +269,7 @@ export function EventList({
                 key={d.label}
                 type="button"
                 disabled={d.isPast}
-                onClick={() => { setActiveIdx(globalIdx); setActive(new Set()); setPage(1); }}
+                onClick={() => { setActiveIdx(globalIdx); resetAllFilters(); }}
                 className={`flex flex-col items-center gap-0.5 py-2 px-1 rounded-lg transition-all duration-100 ${
                   d.isPast
                     ? "opacity-30 cursor-not-allowed text-stone-400"
@@ -177,22 +298,43 @@ export function EventList({
       </div>
 
       {/* Filter bar + map toggle */}
-      <div className="flex items-start gap-2 mb-5">
-        <div className="flex-1">
-          <FilterBar allEvents={allEvents} active={active} onChange={(v) => { setActive(v); setPage(1); }} />
+      <div className="flex items-center gap-1.5 mb-5 flex-wrap">
+        <FilterBar allEvents={allEvents} active={active} onChange={(v) => { setActive(v); setPage(1); }} />
+        <TimeDropdown
+          label="After"
+          value={timeAfter}
+          options={TIME_OPTIONS.slice(0, -1)}
+          onChange={(v) => { setTimeAfter(v); setPage(1); }}
+        />
+        <TimeDropdown
+          label="Before"
+          value={timeBefore}
+          options={TIME_OPTIONS.slice(1)}
+          onChange={(v) => { setTimeBefore(v); setPage(1); }}
+        />
+        {(active.size > 0 || timeAfter !== null || timeBefore !== null) && (
+          <button
+            type="button"
+            onClick={resetAllFilters}
+            className="text-[11.5px] text-stone-400 hover:text-stone-600 px-2 py-1 transition-colors"
+          >
+            Clear ×
+          </button>
+        )}
+        <div className="ml-auto">
+          <button
+            type="button"
+            onClick={() => setShowMap((v) => !v)}
+            className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full border text-[12.5px] font-medium transition-all duration-100 ${
+              showMap
+                ? "bg-stone-900 border-stone-900 text-white"
+                : "bg-white border-stone-200 text-stone-600 hover:border-stone-400"
+            }`}
+          >
+            <MapIcon />
+            Map
+          </button>
         </div>
-        <button
-          type="button"
-          onClick={() => setShowMap((v) => !v)}
-          className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full border text-[12.5px] font-medium transition-all duration-100 shrink-0 ${
-            showMap
-              ? "bg-stone-900 border-stone-900 text-white"
-              : "bg-white border-stone-200 text-stone-600 hover:border-stone-400"
-          }`}
-        >
-          <MapIcon />
-          Map
-        </button>
       </div>
 
       {/* Map */}

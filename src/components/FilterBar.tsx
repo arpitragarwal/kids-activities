@@ -183,15 +183,6 @@ export function FilterBar({
         />
       ))}
 
-      {active.size > 0 && (
-        <button
-          type="button"
-          onClick={() => onChange(new Set())}
-          className="text-[11.5px] text-stone-400 hover:text-stone-600 px-2 py-1 transition-colors"
-        >
-          Clear ×
-        </button>
-      )}
     </div>
   );
 }
