@@ -43,12 +43,14 @@ const KIDS_AUDIENCES = [
   "family",
 ];
 
-const EXCLUDE_AUDIENCES = ["adults", "seniors", "teens (", "tweens", "grades 9-12"];
+const ADULT_ONLY_AUDIENCES = ["adults", "seniors", "teens (", "tweens", "grades 9-12"];
 
 function isKidsEvent(categories: string[]): boolean {
   const cats = categories.map((c) => c.toLowerCase());
-  if (EXCLUDE_AUDIENCES.some((ex) => cats.some((c) => c.includes(ex)))) return false;
-  return KIDS_AUDIENCES.some((kw) => cats.some((c) => c.includes(kw)));
+  const hasKids = KIDS_AUDIENCES.some((kw) => cats.some((c) => c.includes(kw)));
+  if (hasKids) return true; // all-ages events tagged for multiple audiences still pass
+  // No kids audience at all — exclude adult/teen-only events
+  return !ADULT_ONLY_AUDIENCES.some((ex) => cats.some((c) => c.includes(ex)));
 }
 
 // Per-category age ranges. Takes the UNION across all matching categories so an
