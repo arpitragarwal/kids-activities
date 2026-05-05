@@ -1,110 +1,187 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import type { RankedEvent } from "@/lib/rank";
 
-// ─── Filter definitions ───────────────────────────────────────────────────
+// ─── Filter model ─────────────────────────────────────────────────────────
 
-export type FilterId = "indoor" | "outdoor" | "free" | "dropin";
+export type FilterId = "indoor" | "outdoor" | "free" | "paid" | "dropin" | "preregistration";
 
-interface FilterDef {
-  id: FilterId;
+interface FilterOption {
+  id: FilterId | null; // null = "Any"
   label: string;
-  dotClass: string;
   test: (e: RankedEvent) => boolean;
 }
 
-const FILTERS: FilterDef[] = [
+interface FilterGroup {
+  key: string;
+  label: string;
+  memberIds: FilterId[];
+  options: FilterOption[];
+}
+
+const GROUPS: FilterGroup[] = [
   {
-    id: "indoor",
-    label: "Indoor",
-    dotClass: "bg-sky-400",
-    test: (e) => e.indoorness === "indoor",
+    key: "location",
+    label: "Location",
+    memberIds: ["indoor", "outdoor"],
+    options: [
+      { id: null,      label: "Any",     test: () => true },
+      { id: "indoor",  label: "Indoor",  test: (e) => e.indoorness === "indoor" },
+      { id: "outdoor", label: "Outdoor", test: (e) => e.indoorness === "outdoor" },
+    ],
   },
   {
-    id: "outdoor",
-    label: "Outdoor",
-    dotClass: "bg-emerald-500",
-    test: (e) => e.indoorness === "outdoor",
+    key: "cost",
+    label: "Cost",
+    memberIds: ["free", "paid"],
+    options: [
+      { id: null,   label: "Any",  test: () => true },
+      { id: "free", label: "Free", test: (e) => /^free$/i.test(e.cost) },
+      { id: "paid", label: "Paid", test: (e) => !/^free$/i.test(e.cost) },
+    ],
   },
   {
-    id: "free",
-    label: "Free",
-    dotClass: "bg-emerald-400",
-    test: (e) => /^free$/i.test(e.cost),
-  },
-  {
-    id: "dropin",
-    label: "Drop-in",
-    dotClass: "bg-sky-400",
-    test: (e) => e.registration === "drop-in" || e.registration === "walk-in",
+    key: "registration",
+    label: "Sign-up",
+    memberIds: ["dropin", "preregistration"],
+    options: [
+      { id: null,               label: "Any",       test: () => true },
+      { id: "dropin",           label: "Drop-in",   test: (e) => e.registration === "drop-in" || e.registration === "walk-in" },
+      { id: "preregistration",  label: "Required",  test: (e) => e.registration === "required" },
+    ],
   },
 ];
 
+const ALL_OPTIONS = GROUPS.flatMap((g) =>
+  g.options.filter((o) => o.id !== null)
+) as (FilterOption & { id: FilterId })[];
+
 // ─── Utility ──────────────────────────────────────────────────────────────
 
-/** Apply a set of active filter IDs to an event list (AND logic). */
-export function applyFilters(
-  events: RankedEvent[],
-  active: Set<FilterId>,
-): RankedEvent[] {
+export function applyFilters(events: RankedEvent[], active: Set<FilterId>): RankedEvent[] {
   if (active.size === 0) return events;
   return events.filter((e) =>
     [...active].every((id) => {
-      const f = FILTERS.find((x) => x.id === id);
+      const f = ALL_OPTIONS.find((x) => x.id === id);
       return f ? f.test(e) : true;
-    }),
+    })
   );
 }
 
-// ─── Component ────────────────────────────────────────────────────────────
+// ─── Dropdown ─────────────────────────────────────────────────────────────
+
+function ChevronDown() {
+  return (
+    <svg width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden="true">
+      <path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function FilterDropdown({
+  group,
+  active,
+  allEvents,
+  onChange,
+}: {
+  group: FilterGroup;
+  active: Set<FilterId>;
+  allEvents: RankedEvent[];
+  onChange: (next: Set<FilterId>) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  const activeId = group.memberIds.find((id) => active.has(id)) ?? null;
+  const activeLabel = group.options.find((o) => o.id === activeId)?.label;
+  const isActive = activeId !== null;
+
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [open]);
+
+  function select(id: FilterId | null) {
+    const next = new Set(active);
+    for (const mid of group.memberIds) next.delete(mid);
+    if (id) next.add(id);
+    onChange(next);
+    setOpen(false);
+  }
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full border text-[12.5px] font-medium transition-all duration-100 ${
+          isActive
+            ? "bg-stone-900 border-stone-900 text-white"
+            : open
+            ? "bg-stone-50 border-stone-400 text-stone-700"
+            : "bg-white border-stone-200 text-stone-600 hover:border-stone-400"
+        }`}
+      >
+        {isActive ? activeLabel : <span className="text-stone-500">{group.label}</span>}
+        <ChevronDown />
+      </button>
+
+      {open && (
+        <div className="absolute top-full mt-1.5 left-0 bg-white border border-stone-200 rounded-xl shadow-lg z-20 min-w-[130px] py-1 overflow-hidden">
+          {group.options.map((opt) => {
+            const count = opt.id
+              ? allEvents.filter((e) => opt.test(e)).length
+              : allEvents.length;
+            const isSelected = opt.id === activeId;
+            return (
+              <button
+                key={opt.id ?? "any"}
+                type="button"
+                onClick={() => select(opt.id)}
+                className={`w-full text-left px-3 py-1.5 text-[13px] flex items-center justify-between gap-4 transition-colors ${
+                  isSelected
+                    ? "bg-stone-50 font-semibold text-stone-900"
+                    : "text-stone-600 hover:bg-stone-50"
+                }`}
+              >
+                <span>{opt.label}</span>
+                <span className="text-[11px] font-mono text-stone-400 tabular-nums">{count}</span>
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── FilterBar ────────────────────────────────────────────────────────────
 
 export function FilterBar({
   allEvents,
   active,
   onChange,
 }: {
-  /** Full unfiltered list — used for per-chip counts. */
   allEvents: RankedEvent[];
   active: Set<FilterId>;
   onChange: (next: Set<FilterId>) => void;
 }) {
-  function toggle(id: FilterId) {
-    const next = new Set(active);
-    next.has(id) ? next.delete(id) : next.add(id);
-    onChange(next);
-  }
-
   return (
     <div className="flex items-center gap-1.5 flex-wrap">
-      <span className="text-[10.5px] font-semibold uppercase tracking-widest text-stone-400 mr-0.5">
-        Filter
-      </span>
-
-      {FILTERS.map((f) => {
-        const count = allEvents.filter(f.test).length;
-        const isActive = active.has(f.id);
-        return (
-          <button
-            key={f.id}
-            type="button"
-            onClick={() => toggle(f.id)}
-            className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full border text-[12.5px] font-medium transition-all duration-100 ${
-              isActive
-                ? "bg-stone-900 border-stone-900 text-white"
-                : "bg-white border-stone-200 text-stone-600 hover:border-stone-400"
-            }`}
-          >
-            {!isActive && (
-              <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${f.dotClass}`} />
-            )}
-            {f.label}
-            <span className={`text-[10px] font-mono ${isActive ? "opacity-60" : "opacity-50"}`}>
-              {count}
-            </span>
-          </button>
-        );
-      })}
+      {GROUPS.map((group) => (
+        <FilterDropdown
+          key={group.key}
+          group={group}
+          active={active}
+          allEvents={allEvents}
+          onChange={onChange}
+        />
+      ))}
 
       {active.size > 0 && (
         <button

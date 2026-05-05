@@ -55,7 +55,7 @@ export default async function HomePage({
   // not UTC midnight (which is 5 PM Pacific and would show yesterday as "today").
   const todayPacific = formatInTimeZone(now, config.timezone, "yyyy-MM-dd");
   const start = fromZonedTime(`${todayPacific}T00:00:00`, config.timezone);
-  const end = endOfDay(addDays(start, 6));
+  const end = endOfDay(addDays(start, 29));
 
   const [{ periods, fetchedAt }, dbEvents, health] = await Promise.all([
     getCachedWeather(),
@@ -70,12 +70,12 @@ export default async function HomePage({
     home: cfg.home,
   });
 
-  // Build 7-day buckets.
+  // Build 30-day buckets.
   const dayDates: Date[] = [];
   const dayKeys: string[] = [];
   const buckets = new Map<string, RankedEvent[]>();
 
-  for (let i = 0; i < 7; i++) {
+  for (let i = 0; i < 30; i++) {
     const d = addDays(start, i);
     const k = formatInTimeZone(d, config.timezone, "EEE MMM d");
     dayDates.push(d);
@@ -84,6 +84,7 @@ export default async function HomePage({
   }
 
   for (const e of ranked) {
+    if (e.source_id === "parks") continue;
     if (!e.evergreen) {
       const k = formatInTimeZone(new Date(e.start_at), config.timezone, "EEE MMM d");
       buckets.get(k)?.push(e);

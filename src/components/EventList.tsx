@@ -34,6 +34,24 @@ function MapIcon() {
   );
 }
 
+function ChevronLeft() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+      <path d="M9 2.5L5 7l4 4.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function ChevronRight() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+      <path d="M5 2.5L9 7l-4 4.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+const WEEK_SIZE = 7;
+
 export function EventList({
   days,
   childAgeMonths,
@@ -46,11 +64,35 @@ export function EventList({
   homeLng: number;
 }) {
   const [activeIdx, setActiveIdx] = useState(0);
+  const [weekStart, setWeekStart] = useState(0);
   const [active, setActive] = useState(new Set<FilterId>());
   const [showMap, setShowMap] = useState(false);
   const [page, setPage] = useState(1);
 
   const PAGE_SIZE = 10;
+  const maxWeekStart = Math.max(0, days.length - WEEK_SIZE);
+  const visibleDays = days.slice(weekStart, weekStart + WEEK_SIZE);
+
+  // Month label — handle weeks spanning two months
+  const firstMonth = visibleDays[0]?.label.split(" ")[1] ?? "";
+  const lastMonth = visibleDays[visibleDays.length - 1]?.label.split(" ")[1] ?? "";
+  const monthLabel = firstMonth === lastMonth ? firstMonth : `${firstMonth} / ${lastMonth}`;
+
+  function goPrevWeek() {
+    const next = Math.max(0, weekStart - WEEK_SIZE);
+    setWeekStart(next);
+    setActiveIdx(next);
+    setActive(new Set());
+    setPage(1);
+  }
+
+  function goNextWeek() {
+    const next = Math.min(weekStart + WEEK_SIZE, maxWeekStart);
+    setWeekStart(next);
+    setActiveIdx(next);
+    setActive(new Set());
+    setPage(1);
+  }
 
   const day = days[activeIdx];
   const allEvents = [...day.topPicks, ...day.rest];
@@ -64,40 +106,67 @@ export function EventList({
 
   return (
     <>
-      {/* Week strip */}
-      <div className="grid grid-cols-7 gap-1 mb-5 bg-white border border-stone-200 rounded-xl p-1.5">
-        {days.map((d, i) => {
-          const isActive = i === activeIdx;
-          const hasEvents = d.topPicks.length + d.rest.length > 0;
-          return (
-            <button
-              key={d.label}
-              type="button"
-              onClick={() => { setActiveIdx(i); setActive(new Set()); setPage(1); }}
-              className={`flex flex-col items-center gap-0.5 py-2 px-1 rounded-lg transition-all duration-100 ${
-                isActive
-                  ? "bg-stone-900 text-white"
-                  : "text-stone-600 hover:bg-stone-100"
-              }`}
-            >
-              <span className="text-[10px] font-semibold uppercase tracking-wider leading-none">
-                {d.abbr}
-              </span>
-              <span className="text-[15px] font-semibold leading-none mt-0.5">
-                {d.num}
-              </span>
-              <span
-                className={`w-1.5 h-1.5 rounded-full mt-0.5 ${
-                  hasEvents
-                    ? isActive
-                      ? "bg-white"
-                      : "bg-[#4a6fa5]"
-                    : "opacity-0"
+      {/* Day strip */}
+      <div className="mb-5 bg-white border border-stone-200 rounded-xl p-1.5">
+        {/* Month row */}
+        <div className="flex items-center justify-between px-0.5 pb-1">
+          <button
+            type="button"
+            onClick={goPrevWeek}
+            disabled={weekStart === 0}
+            aria-label="Previous week"
+            className="p-1.5 rounded-lg text-stone-400 hover:bg-stone-100 hover:text-stone-700 disabled:opacity-20 disabled:cursor-not-allowed transition-all"
+          >
+            <ChevronLeft />
+          </button>
+          <span className="text-[11.5px] font-semibold text-stone-500 tracking-wide">
+            {monthLabel}
+          </span>
+          <button
+            type="button"
+            onClick={goNextWeek}
+            disabled={weekStart >= maxWeekStart}
+            aria-label="Next week"
+            className="p-1.5 rounded-lg text-stone-400 hover:bg-stone-100 hover:text-stone-700 disabled:opacity-20 disabled:cursor-not-allowed transition-all"
+          >
+            <ChevronRight />
+          </button>
+        </div>
+
+        {/* Day buttons */}
+        <div className="grid grid-cols-7 gap-1">
+          {visibleDays.map((d, i) => {
+            const globalIdx = weekStart + i;
+            const isActive = globalIdx === activeIdx;
+            const hasEvents = d.topPicks.length + d.rest.length > 0;
+            return (
+              <button
+                key={d.label}
+                type="button"
+                onClick={() => { setActiveIdx(globalIdx); setActive(new Set()); setPage(1); }}
+                className={`flex flex-col items-center gap-0.5 py-2 px-1 rounded-lg transition-all duration-100 ${
+                  isActive
+                    ? "bg-stone-900 text-white"
+                    : "text-stone-600 hover:bg-stone-100"
                 }`}
-              />
-            </button>
-          );
-        })}
+              >
+                <span className="text-[10px] font-semibold uppercase tracking-wider leading-none">
+                  {d.abbr}
+                </span>
+                <span className="text-[15px] font-semibold leading-none mt-0.5">
+                  {d.num}
+                </span>
+                <span
+                  className={`w-1.5 h-1.5 rounded-full mt-0.5 ${
+                    hasEvents
+                      ? isActive ? "bg-white" : "bg-[#4a6fa5]"
+                      : "opacity-0"
+                  }`}
+                />
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       {/* Filter bar + map toggle */}
