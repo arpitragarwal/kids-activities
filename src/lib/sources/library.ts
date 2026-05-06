@@ -81,8 +81,18 @@ export function makeLibCalSource(cfg: LibCalConfig): SourceDefinition {
         const haystack = summary + " " + desc;
         const { min, max } = ageRangeFromText(haystack);
 
-        const location = (vAny.location as string | undefined) ?? cfg.name;
-        const isOffsite = /offsite|park|magical bridge/i.test(location + " " + desc);
+        const rawLocation = (vAny.location as string | undefined) ?? cfg.name;
+        const isOffsite = /offsite|park|magical bridge/i.test(rawLocation + " " + desc);
+
+        // "Offsite" is not useful to display — pull the real address from the description
+        // e.g. "Find us at 201 S Rengstorff Ave" or "located at 123 Main St"
+        let location = rawLocation;
+        if (/^offsite$/i.test(rawLocation.trim())) {
+          const addrMatch = desc.match(
+            /(?:find us at|located at|we(?:'ll)? be at|join us at)\s+([^!.\n]{5,60})/i,
+          );
+          if (addrMatch) location = addrMatch[1].trim();
+        }
 
         const needsSignup =
           /registration is required|register (online|here|now|in advance|at)|please register|sign[- ]?up required|rsvp/i.test(desc);
