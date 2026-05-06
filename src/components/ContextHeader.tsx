@@ -156,32 +156,35 @@ function SettingsDrawer({
   );
 }
 
-// ─── Profile chips ────────────────────────────────────────────────────────
+// ─── Profile chip ─────────────────────────────────────────────────────────
 
-function ProfileChips({
+function ProfileChip({
   ageLabel,
-  addrDisplay,
+  cityDisplay,
   editing,
   onEdit,
 }: {
   ageLabel: string;
-  addrDisplay: string;
+  cityDisplay: string;
   editing: boolean;
   onEdit: () => void;
 }) {
-  const chipCls = "inline-flex items-center gap-1.5 text-xs font-medium text-stone-600 bg-white border rounded-full px-2.5 py-1 transition-colors cursor-pointer select-none " +
-    (editing ? "border-stone-400 bg-stone-50" : "border-stone-200 hover:border-stone-400 hover:bg-stone-50");
   return (
-    <div className="flex gap-1.5 flex-wrap justify-end shrink-0">
-      <button type="button" onClick={onEdit} className={chipCls}>
-        <PersonIcon />
-        {ageLabel}
-      </button>
-      <button type="button" onClick={onEdit} className={`${chipCls} max-w-[180px] truncate`} title={addrDisplay}>
-        <PinIcon />
-        {addrDisplay}
-      </button>
-    </div>
+    <button
+      type="button"
+      onClick={onEdit}
+      className={`group inline-flex items-center gap-1.5 text-[12px] font-medium text-stone-600 bg-white border rounded-full pl-2.5 pr-2 py-1 transition-colors shrink-0 whitespace-nowrap ${
+        editing ? "border-stone-400 bg-stone-50" : "border-stone-200 hover:border-stone-400 hover:bg-stone-50"
+      }`}
+      title={`${ageLabel} · ${cityDisplay} — click to edit`}
+    >
+      <PersonIcon />
+      <span>{ageLabel} · {cityDisplay}</span>
+      {/* pencil icon */}
+      <svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.4" className="text-stone-400 group-hover:text-stone-600 transition-colors" aria-hidden="true">
+        <path d="M2 9l5-5 1 1-5 5H2V9zM7 4l1-1 1 1-1 1z" />
+      </svg>
+    </button>
   );
 }
 
@@ -208,31 +211,31 @@ export function ContextHeader({
 }) {
   const [editing, setEditing] = useState(false);
 
-  const rawAddr = cfg.home.isDefault ? "Mountain View (default)" : cfg.home.label;
+  const rawAddr = cfg.home.isDefault ? "Mountain View" : cfg.home.label;
   const addrParts = rawAddr.split(",").map((s) => s.trim());
-  const addrDisplay =
-    addrParts.length >= 2 ? `${addrParts[0]}, ${addrParts[1]}` : addrParts[0];
+  // Show "Street, City" or just city if no street
+  const addrDisplay = addrParts.length >= 2 ? `${addrParts[0]}, ${addrParts[1]}` : addrParts[0];
+  // For the compact chip: just city name
+  const cityDisplay = addrParts.length >= 2 ? addrParts[1] : addrParts[0];
 
   const { years, months } = splitYearsMonths(cfg.child.ageMonths);
-  const ageLabel = months > 0 ? `${years}y ${months}m old` : `${years}y old`;
+  const ageLabel = months > 0 ? `${years}y ${months}m` : `${years}y`;
 
   if (!wx) {
     return (
       <div className="pb-4 border-b border-stone-200 mb-5">
         <div className="flex items-start justify-between gap-5">
           <div>
-            <p className="text-[10.5px] font-semibold uppercase tracking-widest text-stone-400 mb-1">
-              Today · {currentTime}
-            </p>
+            <p className="text-[11.5px] font-medium text-stone-400 mb-1">{dateLabel} · {currentTime}</p>
             <p className="text-2xl font-semibold tracking-tight text-stone-900">{dateLabel}</p>
             <p className="text-sm text-stone-400 mt-1">
               Weather not yet fetched.{" "}
               <a href="/api/refresh" className="underline">Refresh now</a>
             </p>
           </div>
-          <ProfileChips
+          <ProfileChip
             ageLabel={ageLabel}
-            addrDisplay={addrDisplay}
+            cityDisplay={cityDisplay}
             editing={editing}
             onEdit={() => setEditing((v) => !v)}
           />
@@ -268,18 +271,13 @@ export function ContextHeader({
             {wx.precipPct >= 30 && (
               <span className="text-[13px] text-stone-400">· {wx.precipPct}% rain</span>
             )}
-            {fetchedAt && (
-              <span className="text-[10px] text-stone-300">
-                · updated {formatInTimeZone(fetchedAt, config.timezone, "h:mm a")}
-              </span>
-            )}
           </div>
         </div>
 
-        {/* Right: profile */}
-        <ProfileChips
+        {/* Right: profile chip */}
+        <ProfileChip
           ageLabel={ageLabel}
-          addrDisplay={addrDisplay}
+          cityDisplay={cityDisplay}
           editing={editing}
           onEdit={() => setEditing((v) => !v)}
         />

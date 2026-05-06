@@ -267,18 +267,31 @@ export function EventList({
 
       {/* Top picks (page 1 only) */}
       {page === 1 && pageTopPicks.length > 0 && (
-        <section className="mb-8">
-          <div className="flex items-center gap-2 mb-3">
-            <span className="inline-flex items-center gap-1.5 text-[11.5px] font-semibold bg-amber-50 text-amber-700 border border-amber-200 rounded-full px-2.5 py-1">
-              <svg width="11" height="11" viewBox="0 0 16 16" fill="currentColor">
+        <section className="mb-7">
+          <div className="flex items-baseline justify-between mb-3 gap-3">
+            <h2 className="text-[15px] font-semibold tracking-tight text-stone-900 flex items-center gap-2">
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" className="text-amber-500 shrink-0">
                 <path d="M8 1l1.8 3.6L14 5.4l-3 2.9.7 4.1L8 10.4l-3.7 2 .7-4.1-3-2.9 4.2-.8z" />
               </svg>
-              Top picks
+              {childAgeMonths
+                ? `Picked for your ${Math.floor(childAgeMonths / 12) > 0
+                    ? `${Math.floor(childAgeMonths / 12)}y${childAgeMonths % 12 > 0 ? ` ${childAgeMonths % 12}m` : ""}`
+                    : `${childAgeMonths}m`}-old`
+                : "Top picks"}
+            </h2>
+            <span className="text-[11px] text-stone-400 whitespace-nowrap shrink-0">
+              {pageTopPicks.length} {pageTopPicks.length === 1 ? "pick" : "picks"}
             </span>
           </div>
-          <div className="flex flex-col gap-2.5">
-            {pageTopPicks.map((e) => (
-              <EventCard key={`${e.source_id}-${e.external_id}`} event={e} childAgeMonths={childAgeMonths} />
+          <div className="flex flex-col gap-2">
+            {pageTopPicks.map((e, i) => (
+              <EventCard
+                key={`${e.source_id}-${e.external_id}`}
+                event={e}
+                childAgeMonths={childAgeMonths}
+                isTopPick
+                defaultExpanded={i === 0 && page === 1}
+              />
             ))}
           </div>
         </section>
@@ -288,17 +301,17 @@ export function EventList({
       <section>
         {pageRest.length > 0 && (
           <>
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="text-[11px] font-semibold uppercase tracking-widest text-stone-400">
+            <div className="flex items-baseline justify-between mb-3 gap-3">
+              <h2 className="text-[11px] font-semibold uppercase tracking-widest text-stone-400 whitespace-nowrap">
                 {page === 1
-                  ? `Everything available ${activeIdx === todayIdx ? "today" : day.label.split(" ").slice(0, 2).join(" ")}`
-                  : `More activities`}
+                  ? `Everything else ${activeIdx === todayIdx ? "today" : day.label.split(" ").slice(0, 2).join(" ")}`
+                  : "More activities"}
               </h2>
-              <span className="text-[11px] font-mono text-stone-400 bg-stone-100 px-2 py-0.5 rounded-full">
-                {filteredAll.length}
+              <span className="text-[11px] text-stone-400 tabular-nums whitespace-nowrap shrink-0">
+                {filteredAll.length} matching
               </span>
             </div>
-            <div className="flex flex-col gap-2.5">
+            <div className="flex flex-col gap-2">
               {pageRest.map((e) => (
                 <EventCard key={`${e.source_id}-${e.external_id}`} event={e} childAgeMonths={childAgeMonths} />
               ))}
@@ -306,8 +319,11 @@ export function EventList({
           </>
         )}
 
-        {filteredAll.length === 0 && active.size > 0 && (
-          <p className="text-sm text-stone-400 py-2">No events match the active filters.</p>
+        {filteredAll.length === 0 && (
+          <div className="text-center py-10 px-6 border border-dashed border-stone-300 rounded-xl bg-white">
+            <p className="text-stone-600 font-medium text-sm">No matches with these filters.</p>
+            <p className="text-stone-400 text-[12.5px] mt-1">Try removing one or two to see more.</p>
+          </div>
         )}
 
         {/* Pagination */}
