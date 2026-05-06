@@ -16,7 +16,7 @@ import Link from "next/link";
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-const DOW_ABBR = ["SU", "MO", "TU", "WE", "TH", "FR", "SA"];
+const DOW_ABBR = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 function computeTopPicks(events: RankedEvent[]): { topPicks: RankedEvent[]; rest: RankedEvent[] } {
   const topPicks: RankedEvent[] = [];

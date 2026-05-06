@@ -3,9 +3,25 @@
 import { useRef, useState, useEffect } from "react";
 import type { RankedEvent } from "@/lib/rank";
 
+// ─── Time helper ─────────────────────────────────────────────────────────
+
+function startHourPacific(isoString: string): number {
+  return parseInt(
+    new Intl.DateTimeFormat("en-US", {
+      timeZone: "America/Los_Angeles",
+      hour: "numeric",
+      hour12: false,
+    }).format(new Date(isoString))
+  );
+}
+
 // ─── Filter model ─────────────────────────────────────────────────────────
 
-export type FilterId = "indoor" | "outdoor" | "free" | "paid" | "dropin" | "preregistration";
+export type FilterId =
+  | "indoor" | "outdoor"
+  | "free" | "paid"
+  | "dropin" | "preregistration"
+  | "morning" | "midmorning" | "afternoon" | "lateafternoon" | "evening";
 
 interface FilterOption {
   id: FilterId | null; // null = "Any"
@@ -49,6 +65,19 @@ const GROUPS: FilterGroup[] = [
       { id: null,               label: "Any",       test: () => true },
       { id: "dropin",           label: "Drop-in",   test: (e) => e.registration === "drop-in" || e.registration === "walk-in" },
       { id: "preregistration",  label: "Required",  test: (e) => e.registration === "required" },
+    ],
+  },
+  {
+    key: "time",
+    label: "Time",
+    memberIds: ["morning", "midmorning", "afternoon", "lateafternoon", "evening"],
+    options: [
+      { id: null,            label: "Any time",  test: () => true },
+      { id: "morning",       label: "6–9am",     test: (e) => { if (e.evergreen) return true; const h = startHourPacific(e.start_at); return h >= 6 && h < 9; } },
+      { id: "midmorning",    label: "9am–Noon",  test: (e) => { if (e.evergreen) return true; const h = startHourPacific(e.start_at); return h >= 9 && h < 12; } },
+      { id: "afternoon",     label: "Noon–3pm",  test: (e) => { if (e.evergreen) return true; const h = startHourPacific(e.start_at); return h >= 12 && h < 15; } },
+      { id: "lateafternoon", label: "3–6pm",     test: (e) => { if (e.evergreen) return true; const h = startHourPacific(e.start_at); return h >= 15 && h < 18; } },
+      { id: "evening",       label: "6pm+",      test: (e) => { if (e.evergreen) return true; const h = startHourPacific(e.start_at); return h >= 18; } },
     ],
   },
 ];
