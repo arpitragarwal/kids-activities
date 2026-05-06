@@ -2,6 +2,7 @@ import "./globals.css";
 import type { Metadata } from "next";
 import { DM_Sans, DM_Mono } from "next/font/google";
 import Link from "next/link";
+import { Analytics } from "@vercel/analytics/next";
 import { SOURCES } from "@/lib/sources";
 
 const dmSans = DM_Sans({
@@ -70,6 +71,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <a href="/api/refresh" className="hover:text-stone-600 transition-colors">Refresh →</a>
           </footer>
         </div>
+        <Analytics />
       </body>
     </html>
   );
