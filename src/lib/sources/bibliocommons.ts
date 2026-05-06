@@ -40,10 +40,10 @@ const KIDS_AUDIENCES = [
   "kids storytimes",
   "storytime",
   "families",
-  "family",
+  // "family" omitted — too broad, matches "Family Learning Centers" (adult ESL program)
 ];
 
-const ADULT_ONLY_AUDIENCES = ["adults", "seniors", "teens (", "tweens", "grades 9-12"];
+const ADULT_ONLY_AUDIENCES = ["adults", "seniors", "teens (", "tweens", "grades 9-12", "family learning"];
 
 function isKidsEvent(categories: string[]): boolean {
   const cats = categories.map((c) => c.toLowerCase());
