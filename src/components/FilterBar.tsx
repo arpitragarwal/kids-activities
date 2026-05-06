@@ -21,7 +21,8 @@ export type FilterId =
   | "indoor" | "outdoor"
   | "free" | "paid"
   | "dropin" | "preregistration"
-  | "morning" | "midmorning" | "afternoon" | "lateafternoon" | "evening";
+  | "morning" | "midmorning" | "afternoon" | "lateafternoon" | "evening"
+  | "walk" | "near" | "mid" | "far";
 
 interface FilterOption {
   id: FilterId | null; // null = "Any"
@@ -78,6 +79,18 @@ const GROUPS: FilterGroup[] = [
       { id: "afternoon",     label: "Noon–3pm",  test: (e) => { if (e.evergreen) return true; const h = startHourPacific(e.start_at); return h >= 12 && h < 15; } },
       { id: "lateafternoon", label: "3–6pm",     test: (e) => { if (e.evergreen) return true; const h = startHourPacific(e.start_at); return h >= 15 && h < 18; } },
       { id: "evening",       label: "6pm+",      test: (e) => { if (e.evergreen) return true; const h = startHourPacific(e.start_at); return h >= 18; } },
+    ],
+  },
+  {
+    key: "distance",
+    label: "Distance",
+    memberIds: ["walk", "near", "mid", "far"],
+    options: [
+      { id: null,   label: "Any distance", test: () => true },
+      { id: "walk", label: "Walking",      test: (e) => e.distanceMiles === null || e.distanceMiles <= 1 },
+      { id: "near", label: "Within 5mi",   test: (e) => e.distanceMiles === null || e.distanceMiles <= 5 },
+      { id: "mid",  label: "Within 10mi",  test: (e) => e.distanceMiles === null || e.distanceMiles <= 10 },
+      { id: "far",  label: ">10mi",        test: (e) => e.distanceMiles !== null && e.distanceMiles > 10 },
     ],
   },
 ];
