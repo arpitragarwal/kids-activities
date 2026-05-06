@@ -56,10 +56,11 @@ function isKidsEvent(categories: string[]): boolean {
 // Per-category age ranges. Takes the UNION across all matching categories so an
 // event tagged Babies + Toddlers + Pre-schoolers gets 0–60, not just 18–36.
 const AGE_PATTERNS: Array<{ test: (s: string) => boolean; min: number; max: number }> = [
-  { test: (s) => s.includes("babies & toddlers (0-18"),  min: 0,   max: 18  },
-  { test: (s) => s.includes("babies (under 2)"),          min: 0,   max: 24  },
-  { test: (s) => s.includes("babies"),                    min: 0,   max: 24  },
-  { test: (s) => s.includes("kids: babies"),              min: 0,   max: 12  },
+  { test: (s) => s.includes("babies & toddlers (0-18"),                              min: 0,   max: 18  },
+  { test: (s) => s.includes("babies (under 2)"),                                     min: 0,   max: 24  },
+  { test: (s) => s.includes("kids: babies"),                                          min: 0,   max: 12  },
+  // general "babies" — only when not already covered by a more specific pattern above
+  { test: (s) => s.includes("babies") && !s.includes("kids:") && !s.includes("& toddlers"), min: 0, max: 24 },
   { test: (s) => s.includes("toddlers (18 mos"),          min: 18,  max: 36  },
   { test: (s) => s.includes("toddlers (18"),              min: 18,  max: 36  },
   { test: (s) => s.includes("kids: toddlers"),            min: 12,  max: 36  },
