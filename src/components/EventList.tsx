@@ -6,6 +6,41 @@ import type { FilterId } from "@/components/FilterBar";
 import dynamic from "next/dynamic";
 import { EventCard } from "@/components/EventCard";
 import type { RankedEvent } from "@/lib/rank";
+import type { HourlyForecast } from "@/lib/weather";
+
+// ─── Day weather helper ───────────────────────────────────────────────────
+
+interface DayWeather {
+  minF: number;
+  maxF: number;
+  precipPct: number;
+  shortForecast: string;
+}
+
+function getDayWeather(periods: HourlyForecast[], startMs: number): DayWeather | null {
+  const endMs = startMs + 24 * 60 * 60 * 1000;
+  const day = periods.filter((p) => {
+    const t = new Date(p.startTime).getTime();
+    return t >= startMs && t < endMs;
+  });
+  if (day.length === 0) return null;
+  const temps = day.map((p) => p.temperature);
+  const daytime = day.filter((p) => p.isDaytime);
+  const mid = daytime[Math.floor(daytime.length / 2)] ?? day[0];
+  return {
+    minF: Math.round(Math.min(...temps)),
+    maxF: Math.round(Math.max(...temps)),
+    precipPct: Math.max(...day.map((p) => p.probabilityOfPrecipitation)),
+    shortForecast: mid.shortForecast,
+  };
+}
+
+function dayWxIcon(precipPct: number, maxF: number): string {
+  if (precipPct > 50) return "🌧️";
+  if (maxF >= 75) return "🌤️";
+  if (maxF >= 60) return "⛅";
+  return "🌥️";
+}
 
 const MapView = dynamic(
   () => import("@/components/MapView").then((m) => ({ default: m.MapView })),
@@ -22,6 +57,7 @@ export interface DayData {
   abbr: string;        // "WE"
   num: number;         // 1
   isPast: boolean;
+  startMs: number;     // Unix ms of Pacific midnight for this day
   topPicks: RankedEvent[];
   rest: RankedEvent[];
 }
@@ -170,12 +206,14 @@ function TimeDropdown({
 export function EventList({
   days,
   initialActiveIdx = 0,
+  periods,
   childAgeMonths,
   homeLat,
   homeLng,
 }: {
   days: DayData[];
   initialActiveIdx?: number;
+  periods: HourlyForecast[];
   childAgeMonths: number;
   homeLat: number;
   homeLng: number;
@@ -296,6 +334,23 @@ export function EventList({
           })}
         </div>
       </div>
+
+      {/* Weather for selected day (future days only — today shown in header) */}
+      {activeIdx !== todayIdx && (() => {
+        const wx = getDayWeather(periods, days[activeIdx].startMs);
+        if (!wx) return null;
+        const icon = dayWxIcon(wx.precipPct, wx.maxF);
+        return (
+          <div className="flex items-center gap-2 text-[13px] mb-4 -mt-1">
+            <span>{icon}</span>
+            <span className="font-medium text-stone-700">{wx.minF}°–{wx.maxF}°</span>
+            <span className="text-stone-400">· {wx.shortForecast}</span>
+            {wx.precipPct >= 30 && (
+              <span className="text-stone-400">· {wx.precipPct}% rain</span>
+            )}
+          </div>
+        );
+      })()}
 
       {/* Filter bar + map toggle */}
       <div className="flex items-center gap-1.5 mb-5 flex-wrap">

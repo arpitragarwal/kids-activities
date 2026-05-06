@@ -126,6 +126,7 @@ export default async function HomePage({
       abbr: DOW_ABBR[d.getDay()],
       num: d.getDate(),
       isPast: i < daysFromMonday,
+      startMs: d.getTime(),
       topPicks,
       rest,
     };
@@ -183,6 +184,7 @@ export default async function HomePage({
         <EventList
           days={days}
           initialActiveIdx={daysFromMonday}
+          periods={periods}
           childAgeMonths={cfg.child.ageMonths}
           homeLat={cfg.home.lat}
           homeLng={cfg.home.lng}
