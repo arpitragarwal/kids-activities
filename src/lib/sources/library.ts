@@ -88,10 +88,17 @@ export function makeLibCalSource(cfg: LibCalConfig): SourceDefinition {
         // e.g. "Find us at 201 S Rengstorff Ave" or "located at 123 Main St"
         let location = rawLocation;
         if (/^offsite$/i.test(rawLocation.trim())) {
-          const addrMatch = desc.match(
+          // Try two patterns:
+          // 1. A bare street address like "201 S. Rengstorff Ave, Mountain View"
+          // 2. A named place after "find us at / join us at / ..."
+          const streetMatch = desc.match(
+            /\b(\d+\s+[A-Za-z. ]+(?:Ave|St|Blvd|Dr|Rd|Way|Ln|Pl|Place|Circle|Ct)\.?(?:,\s*[A-Za-z ]+)?)/i,
+          );
+          const phraseMatch = desc.match(
             /(?:find us at|located at|we(?:'ll)? be at|join us at)\s+([^!.\n]{5,60})/i,
           );
-          if (addrMatch) location = addrMatch[1].trim();
+          const extracted = streetMatch?.[1] ?? phraseMatch?.[1];
+          if (extracted) location = extracted.replace(/[.,\s]+$/, "").trim();
         }
 
         const needsSignup =
