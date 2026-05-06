@@ -11,6 +11,7 @@ import {
   sanJoseLibrarySource, alamedaCountyLibrarySource, sanMateoCountyLibrarySource,
 } from "./bibliocommons";
 import { parksSource } from "./parks";
+import { musicTogetherSource } from "./musicTogether";
 
 export const SOURCES: SourceDefinition[] = [
   // City Recreation
@@ -34,6 +35,8 @@ export const SOURCES: SourceDefinition[] = [
   sanMateoCountyLibrarySource,
   // Places
   parksSource,
+  // Music
+  musicTogetherSource,
 ];
 
 export interface RefreshOutcome {
