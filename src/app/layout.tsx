@@ -30,34 +30,34 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="font-sans antialiased">
         <div className="max-w-[680px] mx-auto px-5 pb-16">
           <header className="flex items-center justify-between py-5 border-b border-stone-200 mb-6">
-            <Link href="/" className="flex items-center gap-2 text-stone-900 no-underline">
-              <div className="w-[30px] h-[30px] bg-[#4a6fa5] rounded-lg flex items-center justify-center shrink-0">
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                  <circle cx="8" cy="6" r="3" fill="white" opacity="0.9" />
-                  <path
-                    d="M3 14c0-2.76 2.24-5 5-5s5 2.24 5 5"
-                    stroke="white"
-                    strokeWidth="1.5"
-                    strokeLinecap="round"
-                    opacity="0.7"
-                  />
-                </svg>
-              </div>
-              <div>
-                <div className="text-[17px] font-semibold tracking-tight">Kids activities near me</div>
-                <div className="text-[11px] text-stone-400 mt-0.5">
-                  Created by{" "}
-                  <a
-                    href="https://www.linkedin.com/in/arpit-agarwal/"
-                    target="_blank"
-                    rel="noreferrer"
-                    className="hover:text-stone-600 underline underline-offset-2 transition-colors"
-                  >
-                    Arpit Agarwal
-                  </a>
+            <div className="flex flex-col gap-0.5">
+              <Link href="/" className="flex items-center gap-2 text-stone-900 no-underline">
+                <div className="w-[30px] h-[30px] bg-[#4a6fa5] rounded-lg flex items-center justify-center shrink-0">
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                    <circle cx="8" cy="6" r="3" fill="white" opacity="0.9" />
+                    <path
+                      d="M3 14c0-2.76 2.24-5 5-5s5 2.24 5 5"
+                      stroke="white"
+                      strokeWidth="1.5"
+                      strokeLinecap="round"
+                      opacity="0.7"
+                    />
+                  </svg>
                 </div>
-              </div>
-            </Link>
+                <span className="text-[17px] font-semibold tracking-tight">Kids activities near me</span>
+              </Link>
+              <p className="text-[11px] text-stone-400 pl-[38px]">
+                Created by{" "}
+                <a
+                  href="https://www.linkedin.com/in/arpit-agarwal/"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="hover:text-stone-600 underline underline-offset-2 transition-colors"
+                >
+                  Arpit Agarwal
+                </a>
+              </p>
+            </div>
             <Link href="/health" className="flex items-center gap-1.5 text-[12px] text-stone-400 hover:text-stone-600 transition-colors">
               Sources
               <span className="font-mono text-[10px] bg-stone-100 text-stone-500 rounded px-1 py-0.5">{SOURCES.length}</span>
