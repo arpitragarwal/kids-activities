@@ -43,7 +43,20 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                   />
                 </svg>
               </div>
-              <span className="text-[17px] font-semibold tracking-tight">Kids activities near me</span>
+              <div>
+                <div className="text-[17px] font-semibold tracking-tight">Kids activities near me</div>
+                <div className="text-[11px] text-stone-400 mt-0.5">
+                  Created by{" "}
+                  <a
+                    href="https://www.linkedin.com/in/arpit-agarwal/"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="hover:text-stone-600 underline underline-offset-2 transition-colors"
+                  >
+                    Arpit Agarwal
+                  </a>
+                </div>
+              </div>
             </Link>
             <Link href="/health" className="flex items-center gap-1.5 text-[12px] text-stone-400 hover:text-stone-600 transition-colors">
               Sources
