@@ -23,17 +23,17 @@ type ActivityKind =
   | "swim" | "gymnastics" | "sports" | "dance" | "art" | "music" | "yoga"
   | "activity";
 
-function activityKind(sourceId: string, title: string, description?: string | null): ActivityKind {
+function activityKind(sourceId: string, title: string, description?: string | null, location?: string | null): ActivityKind {
   if (LIBRARY_IDS.has(sourceId)) return "library";
   if (sourceId === "parks") return "parks";
 
-  // Check title first, then fall back to description
-  const sources = [title, description ?? ""].map((s) => s.toLowerCase());
+  // Check title, description, and location — title has highest signal but all three matter
+  const sources = [title, description ?? "", location ?? ""].map((s) => s.toLowerCase());
   function has(kw: string) { return sources.some((s) => s.includes(kw)); }
 
   if (has("place to play") || has("open play") || has("play space") || has("play gym") || has("playroom") || has("playground")) return "parks";
   if (has("swim") || has("pool") || has("aqua") || has("water play") || has("splash")) return "swim";
-  if (has("gymnastic") || has("tumbl") || has("acrobat") || has("cheer") || has("cartwheel") || has("handstand") || has("balance beam") || has("vault")) return "gymnastics";
+  if (has("gymnas") || has("tumbl") || has("acrobat") || has("cheer") || has("cartwheel") || has("handstand") || has("balance beam") || has("vault")) return "gymnastics";
   if (has("soccer") || has("basketball") || has("baseball") || has("tennis") || has("lacrosse") || has("volleyball") || has("football") || has("sport") || has("tball") || has("t-ball") || has("kick") || has("batting")) return "sports";
   if (has("danc") || has("ballet") || has("hip hop") || has("hula") || has("zumba") || has("movement class") || has("creative movement")) return "dance";
   if (has("art") || has("craft") || has("paint") || has("draw") || has("sculpt") || has("ceramic") || has("collage") || has("origami")) return "art";
@@ -42,8 +42,8 @@ function activityKind(sourceId: string, title: string, description?: string | nu
   return "activity";
 }
 
-function CategoryIcon({ sourceId, title, description }: { sourceId: string; title: string; description?: string | null }) {
-  const kind = activityKind(sourceId, title, description);
+function CategoryIcon({ sourceId, title, description, location }: { sourceId: string; title: string; description?: string | null; location?: string | null }) {
+  const kind = activityKind(sourceId, title, description, location);
   const common = {
     width: 20, height: 20, viewBox: "0 0 24 24",
     fill: "none" as const, stroke: "currentColor",
@@ -266,7 +266,7 @@ export function EventCard({
       >
         {/* Category icon */}
         <span className="shrink-0 w-9 h-9 rounded-lg flex items-center justify-center bg-stone-100 text-stone-600">
-          <CategoryIcon sourceId={event.source_id} title={event.title} description={event.description} />
+          <CategoryIcon sourceId={event.source_id} title={event.title} description={event.description} location={event.location} />
         </span>
 
         <div className="flex-1 min-w-0">
