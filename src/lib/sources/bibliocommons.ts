@@ -70,7 +70,7 @@ const AGE_PATTERNS: Array<{ test: (s: string) => boolean; min: number; max: numb
   { test: (s) => s.includes("kids (6-11)"),               min: 72,  max: 132 },
   { test: (s) => s.includes("kids: grades k-8"),          min: 60,  max: 168 },
   { test: (s) => s.includes("kids: grades 5-8"),          min: 120, max: 168 },
-  { test: (s) => s.includes("kids: family") || s.includes("famil"), min: 0, max: 144 },
+  { test: (s) => s.includes("kids: family") || s.includes("families"), min: 0, max: 144 },
 ];
 
 function ageRangeFromCategories(categories: string[]): { min: number | null; max: number | null } {
