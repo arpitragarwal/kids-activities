@@ -22,7 +22,7 @@ export type FilterId =
   | "free" | "paid"
   | "dropin" | "preregistration"
   | "morning" | "midmorning" | "afternoon" | "lateafternoon" | "evening"
-  | "walk" | "near" | "mid" | "far";
+  | "walk" | "near" | "mid";
 
 interface FilterOption {
   id: FilterId | null; // null = "Any"
@@ -84,13 +84,12 @@ const GROUPS: FilterGroup[] = [
   {
     key: "distance",
     label: "Distance",
-    memberIds: ["walk", "near", "mid", "far"],
+    memberIds: ["walk", "near", "mid"],
     options: [
       { id: null,   label: "Any distance", test: () => true },
       { id: "walk", label: "Walking",      test: (e) => e.distanceMiles === null || e.distanceMiles <= 1 },
       { id: "near", label: "Within 5mi",   test: (e) => e.distanceMiles === null || e.distanceMiles <= 5 },
       { id: "mid",  label: "Within 10mi",  test: (e) => e.distanceMiles === null || e.distanceMiles <= 10 },
-      { id: "far",  label: ">10mi",        test: (e) => e.distanceMiles !== null && e.distanceMiles > 10 },
     ],
   },
 ];
