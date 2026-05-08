@@ -1,7 +1,7 @@
-# MV Kids
+# Kids Activities Near You
 
-Activity recommender for young kids in Mountain View, CA and nearby cities.
-Pulls events from city recreation systems, public libraries, and a curated
+Activity recommender for young kids in the Bay Area.
+Pulls events from city recreation systems, public libraries, Music Together centers, and a curated
 park list, ranks them against weather/age/distance, and refreshes hourly via cron.
 
 ## Stack
@@ -13,27 +13,64 @@ park list, ranks them against weather/age/distance, and refreshes hourly via cro
 
 ## Sources
 
+### City Recreation (ActiveNet REST API)
+
+| Id | Source |
+|----|--------|
+| `cityRec` | City of Mountain View Recreation |
+| `santaClaraRec` | City of Santa Clara Recreation |
+| `cupertinoRec` | City of Cupertino Recreation |
+| `sanJoseRec` | City of San Jose Recreation |
+| `sfRec` | SF Recreation & Parks |
+| `fremontRec` | City of Fremont Recreation |
+| `milpitasRec` | City of Milpitas Recreation |
+| `redwoodCityRec` | City of Redwood City Recreation |
+| `dalyCityRec` | City of Daly City Recreation |
+
+### Libraries — LibCal iCal feed
+
+| Id | Source |
+|----|--------|
+| `library` | Mountain View Public Library |
+| `sunnyvaleLibrary` | Sunnyvale Public Library |
+| `losGatosLibrary` | Los Gatos Public Library |
+
+### Libraries — BiblioCommons RSS
+
+| Id | Source |
+|----|--------|
+| `paloAltoLibrary` | Palo Alto City Library |
+| `scclLibrary` | Santa Clara County Library (Cupertino + Los Altos branches) |
+| `sanJoseLibrary` | San Jose Public Library |
+| `alamedaCountyLibrary` | Alameda County Library |
+| `sanMateoCountyLibrary` | San Mateo County Library |
+
+### Other
+
 | Id | Source | Mechanism |
 |----|--------|-----------|
-| `library` | Mountain View Public Library | LibCal iCal feed (`ical_subscribe.php?cid=8800`) |
-| `paloAltoLibrary` | Palo Alto City Library | BiblioCommons RSS (`gateway.bibliocommons.com/v2/libraries/paloalto/rss/events`) |
-| `scclLibrary` | Santa Clara County Library (Cupertino + Los Altos branches) | BiblioCommons RSS, filtered by branch |
-| `cityRec` | City of Mountain View Recreation | ActiveNet REST API (`mountainviewrecreation`) |
-| `santaClaraRec` | City of Santa Clara Recreation | ActiveNet REST API (`santaclara`) |
-| `cupertinoRec` | City of Cupertino Recreation | ActiveNet REST API (`cupertino`) |
 | `parks` | Curated parks & indoor places | Hardcoded list in `src/lib/sources/parks.ts` |
+| `music-together` | Music Together (Bay Area centers) | Scrapes `calendar.aspx` from each center's Main Street Sites page; falls back to evergreen for centers without a calendar |
 
 When a source breaks it shows up on `/health` with the last error.
 
 ### Sources not yet integrated
 
-| City | System | Blocker |
-|------|--------|---------|
-| Sunnyvale Parks & Rec | Unknown (not ActiveNet) | City website blocked by Akamai CDN |
-| Palo Alto Parks & Rec | Unknown | City website returns 403 |
+| Source | System | Blocker |
+|--------|--------|---------|
+| Sunnyvale Parks & Rec | ActiveNet (`sunnyvaleactivities`) | Akamai CDN blocks scrapers; may work from Vercel IPs — worth retrying |
 | Los Altos Parks & Rec | Rec1 (`secure.rec1.com`) | Server-rendered SPA, no public API |
-| Sunnyvale Public Library | LibCal | Calendar ID (cid) requires auth to discover |
-| Santa Clara City Library | Unknown | All endpoints return 403 |
+| Campbell Parks & Rec | Rec1 (`secure.rec1.com`) | Server-rendered SPA, no public API |
+| South San Francisco Rec | Rec1 (`secure.rec1.com`) | Server-rendered SPA, no public API |
+| San Mateo City Rec | WebTrac (`casanmateoweb.myvscloud.com`) | Proprietary platform, 403 on direct API hits |
+| Menlo Park Rec | eGovLink (`secure.egovlink.com/menlopark`) | Proprietary platform, no public API |
+| Newark Rec | ActivityReg (`newarkca.activityreg.com`) | Proprietary platform, no public API |
+| Los Gatos Rec | PerfectMind (`losgatos.perfectmind.com`) | Proprietary SaaS, no public API |
+| Daly City Library | LibCal (`dalycity.libcal.com`) | Calendar ID (cid) unknown — find via DevTools Network tab |
+| San Mateo Public Library | LibCal (`sanmateopublic.libcal.com`) | Calendar ID (cid) unknown — find via DevTools Network tab |
+| Santa Clara City Library | LibCal (possibly `sclibrary.libcal.com`) | All endpoints return 403; LibCal instance may exist |
+| Menlo Park Library | Granicus CMS | No structured events feed |
+| Redwood City Library | City CMS | No structured events feed |
 
 ## Running locally
 
@@ -75,9 +112,17 @@ in the app. Defaults can be set in `src/lib/config.ts` or via env vars:
 **ActiveNet (city recreation):** add a new entry to `makeCityRecSource()` callers
 in `src/lib/sources/cityRec.ts` — just supply the slug and venue coords.
 
+**LibCal (library):** add a new config entry in `src/lib/sources/library.ts` —
+supply the `cid` (calendar ID, found in the iCal subscribe URL on the library's events page).
+
 **BiblioCommons (library):** add a new `makeBiblioCommonsSource()` call in
 `src/lib/sources/bibliocommons.ts` — supply the domain slug and optionally a
 `branchFilter` to restrict to specific library branches.
+
+**Music Together:** centers are auto-discovered from the MT locator API within 30 miles
+of Mountain View. Centers using the Main Street Sites `calendar.aspx` platform are
+scraped for real class times; others fall back to an evergreen card. To add a center
+that isn't in the MT API, add it to `STATIC_CENTERS` in `src/lib/sources/musicTogether.ts`.
 
 **Other:** create `src/lib/sources/<name>.ts` exporting a `SourceDefinition`,
 then add it to `SOURCES` in `src/lib/sources/index.ts`.
@@ -87,11 +132,11 @@ the registry records the error and the next run will retry.
 
 ## UI
 
-- **Week strip** — 7-day tab bar at the top; today is selected by default
-- **Filter chips** — Indoor / Outdoor / Free / Drop-in (AND logic)
+- **Week strip** — 7-day tab bar with weather icon + temp range per day
+- **Filter bar** — Location / Cost / Sign-up / Time / Distance (AND logic, dropdown pills)
 - **Map view** — Leaflet + OpenStreetMap; toggle per day; pins colored by indoor/outdoor
-- **Top picks** — up to 3 events, diversified across source × indoorness buckets
-- **Context header** — date, time, weather summary, child age/location profile
+- **Top picks** — personalized for child's age, diversified across source × indoorness buckets
+- **Context header** — date, weather summary, child age/home profile with inline edit drawer
 
 ## Ranking
 
@@ -113,5 +158,7 @@ Score reasons surface as chips on each event card.
   to surfacing adult ESL or senior programs.
 - ActiveNet activities are series, not one-off events. They show as "evergreen"
   while their series date window is active.
-- City rec websites (MV, SC, Cupertino) are behind Akamai and can't be scraped
-  directly — we call the ActiveNet API behind them instead.
+- City rec websites are behind Akamai and can't be scraped directly — we call
+  the ActiveNet REST API behind them instead.
+- Music Together class times are scraped from center websites and may lag a few
+  hours after the hourly refresh if a center updates their calendar.
