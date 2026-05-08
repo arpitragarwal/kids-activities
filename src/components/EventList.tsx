@@ -115,7 +115,7 @@ export function EventList({
   const todayIdx = initialActiveIdx;
   const [activeIdx, setActiveIdx] = useState(initialActiveIdx);
   const [weekStart, setWeekStart] = useState(0);
-  const [active, setActive] = useState(new Set<FilterId>());
+  const [active, setActive] = useState(new Set<FilterId>(["dropin", "mid"]));
   const [showMap, setShowMap] = useState(false);
   const [page, setPage] = useState(1);
 
