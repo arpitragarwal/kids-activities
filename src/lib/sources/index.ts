@@ -8,7 +8,9 @@ import {
   cityRecSource, santaClaraRecSource, cupertinoRecSource,
   sanJoseRecSource, sfRecSource, fremontRecSource,
   milpitasRecSource, redwoodCityRecSource, dalyCityRecSource,
+  sunnyvaleRecSource,
 } from "./cityRec";
+import { santaClaraLibrarySource } from "./santaClaraLibrary";
 import {
   paloAltoLibrarySource, scclLibrarySource,
   sanJoseLibrarySource, alamedaCountyLibrarySource, sanMateoCountyLibrarySource,
@@ -26,6 +28,7 @@ export const SOURCES: SourceDefinition[] = [
   fremontRecSource,
   redwoodCityRecSource,
   dalyCityRecSource,
+  sunnyvaleRecSource,
   sfRecSource,
   // Libraries
   librarySource,
@@ -38,6 +41,7 @@ export const SOURCES: SourceDefinition[] = [
   sanMateoCountyLibrarySource,
   sanMateoPublicLibraryKidsSource,
   sanMateoPublicLibrarySource,
+  santaClaraLibrarySource,
   // Places
   parksSource,
   // Music

@@ -396,3 +396,21 @@ export const dalyCityRecSource = makeCityRecSource({
     "doelger":                        { lat: 37.6928, lng: -122.4726 },
   },
 });
+
+// Sunnyvale — may be blocked by Akamai on residential IPs; expected to work on Vercel
+export const sunnyvaleRecSource = makeCityRecSource({
+  id: "sunnyvaleRec",
+  name: "City of Sunnyvale Recreation",
+  slug: "sunnyvaleactivities",
+  defaultLat: 37.3688,
+  defaultLng: -122.0363,
+  venueCoords: {
+    "sunnyvale community center":     { lat: 37.3667, lng: -122.0160 },
+    "sunnyvale sports center":        { lat: 37.3625, lng: -122.0230 },
+    "las palmas":                     { lat: 37.3740, lng: -121.9934 },
+    "columbia":                       { lat: 37.3748, lng: -121.9940 },
+    "washington":                     { lat: 37.3823, lng: -122.0384 },
+    "lakewood":                       { lat: 37.3575, lng: -122.0171 },
+    "ponderosa":                      { lat: 37.3493, lng: -122.0048 },
+  },
+});

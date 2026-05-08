@@ -26,6 +26,7 @@ park list, ranks them against weather/age/distance, and refreshes hourly via cro
 | `milpitasRec` | City of Milpitas Recreation |
 | `redwoodCityRec` | City of Redwood City Recreation |
 | `dalyCityRec` | City of Daly City Recreation |
+| `sunnyvaleRec` | City of Sunnyvale Recreation |
 
 ### Libraries — LibCal iCal feed
 
@@ -53,6 +54,7 @@ park list, ranks them against weather/age/distance, and refreshes hourly via cro
 |----|--------|-----------|
 | `parks` | Curated parks & indoor places | Hardcoded list in `src/lib/sources/parks.ts` |
 | `music-together` | Music Together (Bay Area centers) | Scrapes `calendar.aspx` from each center's Main Street Sites page; falls back to evergreen for centers without a calendar |
+| `santaClaraLibrary` | Santa Clara City Library | Scrapes server-rendered HTML calendar at `sclibrary.org`; may return 403 on non-Vercel IPs |
 
 When a source breaks it shows up on `/health` with the last error.
 
@@ -60,7 +62,6 @@ When a source breaks it shows up on `/health` with the last error.
 
 | Source | System | Blocker |
 |--------|--------|---------|
-| Sunnyvale Parks & Rec | ActiveNet (`sunnyvaleactivities`) | Akamai CDN blocks scrapers; may work from Vercel IPs — worth retrying |
 | Los Altos Parks & Rec | Rec1 (`secure.rec1.com`) | Server-rendered SPA, no public API |
 | Campbell Parks & Rec | Rec1 (`secure.rec1.com`) | Server-rendered SPA, no public API |
 | South San Francisco Rec | Rec1 (`secure.rec1.com`) | Server-rendered SPA, no public API |
@@ -68,9 +69,8 @@ When a source breaks it shows up on `/health` with the last error.
 | Menlo Park Rec | eGovLink (`secure.egovlink.com/menlopark`) | Proprietary platform, no public API |
 | Newark Rec | ActivityReg (`newarkca.activityreg.com`) | Proprietary platform, no public API |
 | Los Gatos Rec | PerfectMind (`losgatos.perfectmind.com`) | Proprietary SaaS, no public API |
-| Daly City Library | LibCal (`dalycity.libcal.com`) | Calendar ID (cid) unknown — find via DevTools Network tab |
-| Santa Clara City Library | LibCal (possibly `sclibrary.libcal.com`) | All endpoints return 403; LibCal instance may exist |
-| Menlo Park Library | Granicus CMS | No structured events feed |
+| Daly City Library | LibCal (`dalycity.libcal.com`) | LibCal instance has 0 events (only an unused "Online Events" calendar) |
+| Menlo Park Library | Granicus CMS | JavaScript-rendered SPA, no structured events feed |
 | Redwood City Library | City CMS | No structured events feed |
 
 ## Running locally
