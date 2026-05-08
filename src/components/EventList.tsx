@@ -137,14 +137,14 @@ export function EventList({
     const next = Math.max(0, weekStart - WEEK_SIZE);
     setWeekStart(next);
     setActiveIdx(next);
-    resetAllFilters();
+    setPage(1);
   }
 
   function goNextWeek() {
     const next = Math.min(weekStart + WEEK_SIZE, maxWeekStart);
     setWeekStart(next);
     setActiveIdx(next);
-    resetAllFilters();
+    setPage(1);
   }
 
   const day = days[activeIdx];
@@ -197,7 +197,7 @@ export function EventList({
                 key={d.label}
                 type="button"
                 disabled={d.isPast}
-                onClick={() => { setActiveIdx(globalIdx); resetAllFilters(); }}
+                onClick={() => { setActiveIdx(globalIdx); setPage(1); }}
                 className={`flex flex-col items-center gap-0.5 py-2 px-1 rounded-lg transition-all duration-100 ${
                   d.isPast
                     ? "opacity-30 cursor-not-allowed text-stone-400"
