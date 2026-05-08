@@ -34,6 +34,8 @@ park list, ranks them against weather/age/distance, and refreshes hourly via cro
 | `library` | Mountain View Public Library |
 | `sunnyvaleLibrary` | Sunnyvale Public Library |
 | `losGatosLibrary` | Los Gatos Public Library |
+| `sanMateoPublicLibraryKids` | San Mateo Public Library (kids calendar) |
+| `sanMateoPublicLibrary` | San Mateo Public Library (teens/adults calendar — family events extracted) |
 
 ### Libraries — BiblioCommons RSS
 
@@ -67,7 +69,6 @@ When a source breaks it shows up on `/health` with the last error.
 | Newark Rec | ActivityReg (`newarkca.activityreg.com`) | Proprietary platform, no public API |
 | Los Gatos Rec | PerfectMind (`losgatos.perfectmind.com`) | Proprietary SaaS, no public API |
 | Daly City Library | LibCal (`dalycity.libcal.com`) | Calendar ID (cid) unknown — find via DevTools Network tab |
-| San Mateo Public Library | LibCal (`sanmateopublic.libcal.com`) | Calendar ID (cid) unknown — find via DevTools Network tab |
 | Santa Clara City Library | LibCal (possibly `sclibrary.libcal.com`) | All endpoints return 403; LibCal instance may exist |
 | Menlo Park Library | Granicus CMS | No structured events feed |
 | Redwood City Library | City CMS | No structured events feed |
