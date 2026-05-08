@@ -21,8 +21,8 @@ const dmMono = DM_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Kids Activities Near You",
-  description: "Activities for little kids in Mountain View and nearby cities",
+  title: "Bay Area Kids Activities",
+  description: "Activities for little kids in Mountain View and the Bay Area",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
