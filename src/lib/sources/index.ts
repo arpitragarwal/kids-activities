@@ -1,6 +1,9 @@
 import { sql, ensureSchema } from "../db";
 import type { NormalizedEvent, SourceDefinition, SourceHealth } from "../types";
-import { librarySource, sunnyvaleLibrarySource, losGatosLibrarySource } from "./library";
+import {
+  librarySource, sunnyvaleLibrarySource, losGatosLibrarySource,
+  sanMateoPublicLibraryKidsSource, sanMateoPublicLibrarySource,
+} from "./library";
 import {
   cityRecSource, santaClaraRecSource, cupertinoRecSource,
   sanJoseRecSource, sfRecSource, fremontRecSource,
@@ -33,6 +36,8 @@ export const SOURCES: SourceDefinition[] = [
   sanJoseLibrarySource,
   alamedaCountyLibrarySource,
   sanMateoCountyLibrarySource,
+  sanMateoPublicLibraryKidsSource,
+  sanMateoPublicLibrarySource,
   // Places
   parksSource,
   // Music

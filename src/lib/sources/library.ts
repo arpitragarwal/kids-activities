@@ -41,10 +41,12 @@ interface LibCalConfig {
   cid: number;
   lat: number;
   lng: number;
+  src?: string;  // optional src= param (e.g. "p" for public calendar feeds)
 }
 
 export function makeLibCalSource(cfg: LibCalConfig): SourceDefinition {
-  const FEED_URL = `https://${cfg.subdomain}.libcal.com/ical_subscribe.php?cid=${cfg.cid}`;
+  const params = cfg.src ? `src=${cfg.src}&cid=${cfg.cid}` : `cid=${cfg.cid}`;
+  const FEED_URL = `https://${cfg.subdomain}.libcal.com/ical_subscribe.php?${params}`;
 
   return {
     id: cfg.id,
@@ -156,4 +158,25 @@ export const losGatosLibrarySource = makeLibCalSource({
   cid: 11830,
   lat: 37.2358,
   lng: -121.9625,
+});
+
+// San Mateo Public Library — Main Branch (55 W 3rd Ave, San Mateo)
+export const sanMateoPublicLibraryKidsSource = makeLibCalSource({
+  id: "sanMateoPublicLibraryKids",
+  name: "San Mateo Public Library (Kids)",
+  subdomain: "sanmateopublic",
+  src: "p",
+  cid: 16089,
+  lat: 37.5629,
+  lng: -122.3255,
+});
+
+export const sanMateoPublicLibrarySource = makeLibCalSource({
+  id: "sanMateoPublicLibrary",
+  name: "San Mateo Public Library",
+  subdomain: "sanmateopublic",
+  src: "p",
+  cid: 12176,
+  lat: 37.5629,
+  lng: -122.3255,
 });
