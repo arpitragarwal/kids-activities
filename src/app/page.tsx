@@ -101,11 +101,20 @@ export default async function HomePage({
       const sched = parseScheduleLabel(e.schedule_label);
       if (sched.days.length > 0) {
         const DOW: Record<string, number> = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 };
+        // Only show series on days that fall within its date-range window.
+        // start_at = date_range_start at 9 AM PT; end_at = date_range_end at 23:59 PT.
+        const seriesStart = formatInTimeZone(new Date(e.start_at), config.timezone, "yyyy-MM-dd");
+        const seriesEnd = e.end_at
+          ? formatInTimeZone(new Date(e.end_at), config.timezone, "yyyy-MM-dd")
+          : null;
         for (let i = 0; i < dayDates.length; i++) {
           const abbr = new Intl.DateTimeFormat("en-US", { timeZone: config.timezone, weekday: "short" }).format(dayDates[i]);
           const dow = DOW[abbr] ?? dayDates[i].getDay();
           if (sched.days.includes(dow)) {
-            buckets.get(dayKeys[i])!.push(e);
+            const dayStr = formatInTimeZone(dayDates[i], config.timezone, "yyyy-MM-dd");
+            if (dayStr >= seriesStart && (!seriesEnd || dayStr <= seriesEnd)) {
+              buckets.get(dayKeys[i])!.push(e);
+            }
           }
         }
         continue;
