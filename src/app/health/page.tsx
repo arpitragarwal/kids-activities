@@ -28,6 +28,10 @@ const GROUPS = [
     label: "Places",
     ids: ["parks"],
   },
+  {
+    label: "Pools",
+    ids: ["mvPool"],
+  },
 ];
 
 // Short display names for tiles
@@ -53,6 +57,8 @@ const SHORT_NAME: Record<string, string> = {
   sanMateoCountyLibrary:  "San Mateo Co.",
   // Places
   parks:                  "MV Parks",
+  // Pools
+  mvPool:                 "MV Rengstorff",
 };
 
 // ─── Status styles ────────────────────────────────────────────────────────

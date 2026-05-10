@@ -17,6 +17,7 @@ import {
 } from "./bibliocommons";
 import { parksSource } from "./parks";
 import { musicTogetherSource } from "./musicTogether";
+import { mvPoolSource } from "./pools";
 
 export const SOURCES: SourceDefinition[] = [
   // City Recreation
@@ -46,6 +47,8 @@ export const SOURCES: SourceDefinition[] = [
   parksSource,
   // Music
   musicTogetherSource,
+  // Pools (hardcoded seasonal schedules — update each season)
+  mvPoolSource,
 ];
 
 export interface RefreshOutcome {
@@ -178,12 +181,21 @@ export async function getSourceHealth(): Promise<SourceHealth[]> {
     if (!lastSuccess) status = "broken";
     else if (r.last_error) status = "broken";
     else if (now - lastSuccess.getTime() > STALE_MS) status = "stale";
+
+    // Hardcoded seasonal sources (e.g. pools): mark stale once the season ends.
+    let lastError = r.last_error;
+    if (src.scheduleEndsAt && src.scheduleEndsAt.getTime() < now && status !== "broken") {
+      status = "stale";
+      const exp = src.scheduleEndsAt.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+      lastError = `Schedule expired ${exp} — update src/lib/sources/pools.ts`;
+    }
+
     return {
       id: src.id,
       name: src.name,
       lastRunAt: lastRun,
       lastSuccessAt: lastSuccess,
-      lastError: r.last_error,
+      lastError,
       lastEventCount: r.last_event_count,
       status,
     } satisfies SourceHealth;

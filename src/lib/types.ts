@@ -36,6 +36,11 @@ export interface SourceDefinition {
   name: string;
   description: string;
   fetch(): Promise<SourceResult>;
+  /**
+   * For hardcoded seasonal sources (e.g. pool schedules): the health page
+   * marks the source as stale once this date passes, prompting an update.
+   */
+  scheduleEndsAt?: Date;
 }
 
 export interface SourceHealth {
