@@ -9,21 +9,46 @@ import { config } from "@/lib/config";
 
 // ─── Icons ────────────────────────────────────────────────────────────────
 
-function PinIcon() {
+function PinIcon({ size = 14 }: { size?: number } = {}) {
   return (
-    <svg width="11" height="11" viewBox="0 0 12 12" fill="currentColor" aria-hidden="true">
+    <svg width={size} height={size} viewBox="0 0 12 12" fill="currentColor" aria-hidden="true">
       <path d="M6 1C4.067 1 2.5 2.567 2.5 4.5c0 2.65 3.5 6.5 3.5 6.5s3.5-3.85 3.5-6.5C9.5 2.567 7.933 1 6 1zm0 4.75A1.25 1.25 0 1 1 6 3.25a1.25 1.25 0 0 1 0 2.5z" />
     </svg>
   );
 }
 
-function PersonIcon() {
+function PersonIcon({ size = 14 }: { size?: number } = {}) {
   return (
-    <svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.3" aria-hidden="true">
+    <svg width={size} height={size} viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.3" aria-hidden="true">
       <circle cx="6" cy="4" r="2.5" />
       <path d="M1.5 11c0-2.485 2.015-4.5 4.5-4.5s4.5 2.015 4.5 4.5" strokeLinecap="round" />
     </svg>
   );
+}
+
+// ─── Address helpers ──────────────────────────────────────────────────────
+
+const US_STATE_RE = /^(Alabama|Alaska|Arizona|Arkansas|California|Colorado|Connecticut|Delaware|Florida|Georgia|Hawaii|Idaho|Illinois|Indiana|Iowa|Kansas|Kentucky|Louisiana|Maine|Maryland|Massachusetts|Michigan|Minnesota|Mississippi|Missouri|Montana|Nebraska|Nevada|New Hampshire|New Jersey|New Mexico|New York|North Carolina|North Dakota|Ohio|Oklahoma|Oregon|Pennsylvania|Rhode Island|South Carolina|South Dakota|Tennessee|Texas|Utah|Vermont|Virginia|Washington|West Virginia|Wisconsin|Wyoming|District of Columbia)$/i;
+
+const STREETY_RE = /\b(Avenue|Ave|Street|St|Road|Rd|Boulevard|Blvd|Drive|Dr|Lane|Ln|Way|Court|Ct|Place|Pl|Parkway|Pkwy|Highway|Hwy|Terrace|Ter|Circle|Cir)\.?$/i;
+
+function pickCity(parts: string[]): string {
+  if (parts.length === 0) return "";
+  if (parts.length === 1) return parts[0];
+  // Prefer the part right before "...County" or a US state name.
+  for (let i = 1; i < parts.length; i++) {
+    if (/county$/i.test(parts[i]) || US_STATE_RE.test(parts[i])) {
+      return parts[i - 1];
+    }
+  }
+  // Fallback: first part that doesn't look like a house number or street name.
+  for (let i = 0; i < parts.length; i++) {
+    const p = parts[i];
+    if (/^\d+$/.test(p)) continue;
+    if (STREETY_RE.test(p)) continue;
+    return p;
+  }
+  return parts[parts.length - 1];
 }
 
 // ─── Weather helpers ──────────────────────────────────────────────────────
@@ -169,22 +194,32 @@ function ProfileChip({
   editing: boolean;
   onEdit: () => void;
 }) {
+  const baseCls = `group inline-flex items-center gap-2 text-[15px] font-semibold text-stone-700 bg-white border rounded-full px-4 py-2 transition-colors shrink-0 whitespace-nowrap ${
+    editing ? "border-stone-400 bg-stone-50" : "border-stone-200 hover:border-stone-400 hover:bg-stone-50"
+  }`;
   return (
-    <button
-      type="button"
-      onClick={onEdit}
-      className={`group inline-flex items-center gap-1.5 text-[12px] font-medium text-stone-600 bg-white border rounded-full pl-2.5 pr-2 py-1 transition-colors shrink-0 whitespace-nowrap ${
-        editing ? "border-stone-400 bg-stone-50" : "border-stone-200 hover:border-stone-400 hover:bg-stone-50"
-      }`}
-      title={`${ageLabel} · ${cityDisplay} — click to edit`}
-    >
-      <PersonIcon />
-      <span>{ageLabel} · {cityDisplay}</span>
-      {/* pencil icon */}
-      <svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.4" className="text-stone-400 group-hover:text-stone-600 transition-colors" aria-hidden="true">
-        <path d="M2 9l5-5 1 1-5 5H2V9zM7 4l1-1 1 1-1 1z" />
-      </svg>
-    </button>
+    <div className="flex flex-col items-end gap-2 sm:flex-row sm:items-center">
+      <button
+        type="button"
+        onClick={onEdit}
+        className={baseCls}
+        title={`${ageLabel} — click to edit`}
+        aria-label={`Child's age: ${ageLabel}. Click to edit.`}
+      >
+        <PersonIcon />
+        <span>{ageLabel}</span>
+      </button>
+      <button
+        type="button"
+        onClick={onEdit}
+        className={baseCls}
+        title={`${cityDisplay} — click to edit`}
+        aria-label={`Location: ${cityDisplay}. Click to edit.`}
+      >
+        <PinIcon />
+        <span>{cityDisplay}</span>
+      </button>
+    </div>
   );
 }
 
@@ -212,11 +247,13 @@ export function ContextHeader({
   const [editing, setEditing] = useState(false);
 
   const rawAddr = cfg.home.isDefault ? "Mountain View" : cfg.home.label;
-  const addrParts = rawAddr.split(",").map((s) => s.trim());
+  const addrParts = rawAddr.split(",").map((s) => s.trim()).filter(Boolean);
   // Show "Street, City" or just city if no street
   const addrDisplay = addrParts.length >= 2 ? `${addrParts[0]}, ${addrParts[1]}` : addrParts[0];
-  // For the compact chip: just city name
-  const cityDisplay = addrParts.length >= 2 ? addrParts[1] : addrParts[0];
+  // For the compact chip: just the city name. Nominatim display_name is roughly
+  // "[house#], [street], [neighborhood?], [city], [...County], [state], [zip], [country]"
+  // — so the part right before "...County" or a US state name is reliably the city.
+  const cityDisplay = pickCity(addrParts);
 
   const { years, months } = splitYearsMonths(cfg.child.ageMonths);
   const ageLabel = months > 0 ? `${years}y ${months}m` : `${years}y`;
