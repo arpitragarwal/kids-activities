@@ -80,6 +80,20 @@ function parseEventTime(timeStr: string, day: number, month: number, year: numbe
   return fromZonedTime(new Date(year, month - 1, day, h, min), TZ);
 }
 
+// ─── HTML entity decoding ─────────────────────────────────────────────────
+
+function decodeHtmlEntities(s: string): string {
+  return s
+    .replace(/&#(\d+);/g, (_, n) => String.fromCodePoint(parseInt(n, 10)))
+    .replace(/&#x([0-9a-fA-F]+);/g, (_, n) => String.fromCodePoint(parseInt(n, 16)))
+    .replace(/&amp;/g, "&")
+    .replace(/&quot;/g, '"')
+    .replace(/&apos;/g, "'")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&nbsp;/g, " ");
+}
+
 // ─── HTML parser ──────────────────────────────────────────────────────────
 
 function parseCalendarPage(html: string, month: number, year: number): NormalizedEvent[] {
@@ -112,7 +126,7 @@ function parseCalendarPage(html: string, month: number, year: number): Normalize
       const linkMatch = itemChunk.match(/<a[^>]*class="calendar_eventlink"[^>]*href="([^"]+)"[^>]*>([^<]+)<\/a>/i);
       if (!linkMatch) continue;
       const href = linkMatch[1];
-      const rawTitle = linkMatch[2].trim();
+      const rawTitle = decodeHtmlEntities(linkMatch[2].trim());
 
       // Skip cancelled
       if (/cancel/i.test(rawTitle)) continue;
