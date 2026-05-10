@@ -5,74 +5,100 @@ import type { SourceHealth } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
-// ─── Category groupings ───────────────────────────────────────────────────
+// ─── City/region groupings ────────────────────────────────────────────────
 
 const GROUPS = [
   {
-    label: "South Bay Recreation",
-    ids: ["cityRec", "santaClaraRec", "cupertinoRec", "milpitasRec", "sanJoseRec", "fremontRec"],
+    label: "Mountain View",
+    ids: ["cityRec", "library", "parks", "musicTogether", "mvPool", "eaglePool"],
   },
   {
-    label: "Peninsula & SF Recreation",
-    ids: ["redwoodCityRec", "dalyCityRec", "sfRec"],
+    label: "Sunnyvale",
+    ids: ["sunnyvaleRec", "sunnyvaleLibrary"],
   },
   {
-    label: "South Bay Libraries",
-    ids: ["library", "sunnyvaleLibrary", "losGatosLibrary", "scclLibrary", "sanJoseLibrary", "alamedaCountyLibrary"],
+    label: "Santa Clara",
+    ids: ["santaClaraRec", "santaClaraLibrary", "santaClaraGomezPool", "santaClaraWarburtonPool"],
   },
   {
-    label: "Peninsula Libraries",
-    ids: ["paloAltoLibrary", "sanMateoCountyLibrary"],
+    label: "Cupertino",
+    ids: ["cupertinoRec", "scclLibrary", "cupertinoBlackberryPool"],
   },
   {
-    label: "Places",
-    ids: ["parks"],
+    label: "San Jose",
+    ids: ["sanJoseRec", "sanJoseLibrary"],
   },
   {
-    label: "Pools",
-    ids: [
-      "mvPool", "eaglePool",
-      "santaClaraGomezPool", "santaClaraWarburtonPool",
-      "cupertinoBlackberryPool",
-      "dalyCityPool", "campbellPool",
-      "sanMateoJoinvillePool", "sanMateoKingPool",
-    ],
+    label: "Milpitas",
+    ids: ["milpitasRec"],
+  },
+  {
+    label: "Los Gatos & Campbell",
+    ids: ["losGatosLibrary", "campbellPool"],
+  },
+  {
+    label: "Fremont & East Bay",
+    ids: ["fremontRec", "alamedaCountyLibrary"],
+  },
+  {
+    label: "Daly City & San Francisco",
+    ids: ["dalyCityRec", "dalyCityPool", "sfRec"],
+  },
+  {
+    label: "Palo Alto & Redwood City",
+    ids: ["paloAltoLibrary", "redwoodCityRec"],
+  },
+  {
+    label: "San Mateo",
+    ids: ["sanMateoPublicLibraryKids", "sanMateoPublicLibrary", "sanMateoCountyLibrary", "sanMateoJoinvillePool", "sanMateoKingPool"],
   },
 ];
 
-// Short display names for tiles
+// Tile labels show source type — city is already the section heading.
 const SHORT_NAME: Record<string, string> = {
-  // Recreation
-  cityRec:                "Mountain View",
-  santaClaraRec:          "Santa Clara",
-  cupertinoRec:           "Cupertino",
-  milpitasRec:            "Milpitas",
-  sanJoseRec:             "San Jose",
-  fremontRec:             "Fremont",
-  redwoodCityRec:         "Redwood City",
-  dalyCityRec:            "Daly City",
-  sfRec:                  "San Francisco",
-  // Libraries
-  library:                "Mountain View",
-  sunnyvaleLibrary:       "Sunnyvale",
-  losGatosLibrary:        "Los Gatos",
-  scclLibrary:            "Cupertino/Milpitas/LA",
-  sanJoseLibrary:         "San Jose",
-  alamedaCountyLibrary:   "Fremont/Newark",
-  paloAltoLibrary:        "Palo Alto",
-  sanMateoCountyLibrary:  "San Mateo Co.",
-  // Places
-  parks:                  "MV Parks",
-  // Pools
-  mvPool:                   "MV Rengstorff",
-  eaglePool:                "MV Eagle Park",
-  santaClaraGomezPool:      "SC Mary Gomez",
-  santaClaraWarburtonPool:  "SC Warburton",
-  cupertinoBlackberryPool:  "Cupertino BFarm",
-  dalyCityPool:             "Daly City",
-  campbellPool:             "Campbell",
-  sanMateoJoinvillePool:    "SM Joinville",
-  sanMateoKingPool:         "SM King",
+  // Mountain View
+  cityRec:                    "Recreation",
+  library:                    "Public Library",
+  parks:                      "Parks & Places",
+  musicTogether:              "Music Together",
+  mvPool:                     "Rengstorff Pool",
+  eaglePool:                  "Eagle Park Pool",
+  // Sunnyvale
+  sunnyvaleRec:               "Recreation",
+  sunnyvaleLibrary:           "Public Library",
+  // Santa Clara
+  santaClaraRec:              "Recreation",
+  santaClaraLibrary:          "City Library",
+  santaClaraGomezPool:        "Mary Gomez Pool",
+  santaClaraWarburtonPool:    "Warburton Pool",
+  // Cupertino (scclLibrary also covers Los Altos, Milpitas, Campbell branches)
+  cupertinoRec:               "Recreation",
+  scclLibrary:                "County Library",
+  cupertinoBlackberryPool:    "Blackberry Farm Pool",
+  // San Jose
+  sanJoseRec:                 "Recreation",
+  sanJoseLibrary:             "Public Library",
+  // Milpitas
+  milpitasRec:                "Recreation",
+  // Los Gatos & Campbell
+  losGatosLibrary:            "Los Gatos Library",
+  campbellPool:               "Community Pool",
+  // Fremont & East Bay
+  fremontRec:                 "Fremont Recreation",
+  alamedaCountyLibrary:       "Alameda Co. Library",
+  // Daly City & San Francisco
+  dalyCityRec:                "Daly City Recreation",
+  dalyCityPool:               "Giammona Pool",
+  sfRec:                      "SF Rec & Parks",
+  // Palo Alto & Redwood City
+  paloAltoLibrary:            "Palo Alto Library",
+  redwoodCityRec:             "Redwood City Rec",
+  // San Mateo
+  sanMateoPublicLibraryKids:  "Public Library (Kids)",
+  sanMateoPublicLibrary:      "Public Library",
+  sanMateoCountyLibrary:      "County Library",
+  sanMateoJoinvillePool:      "Joinville Pool",
+  sanMateoKingPool:           "King Pool",
 };
 
 // ─── Status styles ────────────────────────────────────────────────────────
