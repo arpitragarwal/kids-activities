@@ -17,7 +17,13 @@ import {
 } from "./bibliocommons";
 import { parksSource } from "./parks";
 import { musicTogetherSource } from "./musicTogether";
-import { mvPoolSource, eaglePoolSource } from "./pools";
+import {
+  mvPoolSource, eaglePoolSource,
+  santaClaraGomezPoolSource, santaClaraWarburtonPoolSource,
+  cupertinoBlackberryPoolSource,
+  dalyCityPoolSource, campbellPoolSource,
+  sanMateoJoinvillePoolSource, sanMateoKingPoolSource,
+} from "./pools";
 
 export const SOURCES: SourceDefinition[] = [
   // City Recreation
@@ -50,6 +56,13 @@ export const SOURCES: SourceDefinition[] = [
   // Pools (hardcoded seasonal schedules — update each season)
   mvPoolSource,
   eaglePoolSource,
+  santaClaraGomezPoolSource,
+  santaClaraWarburtonPoolSource,
+  cupertinoBlackberryPoolSource,
+  dalyCityPoolSource,
+  campbellPoolSource,
+  sanMateoJoinvillePoolSource,
+  sanMateoKingPoolSource,
 ];
 
 export interface RefreshOutcome {

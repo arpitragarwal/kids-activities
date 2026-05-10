@@ -157,3 +157,192 @@ export const eaglePoolSource = makePoolSource({
     },
   ],
 });
+
+// Santa Clara — Mary Gomez Park & Aquatic Center
+// Source: https://www.santaclaraca.gov/our-city/departments-g-z/parks-recreation/recreation-programs/swimming
+// Season: Jun 8 – Aug 30 2026
+export const santaClaraGomezPoolSource = makePoolSource({
+  id: "santaClaraGomezPool",
+  name: "SC Mary Gomez Aquatic Center",
+  location: "Mary Gomez Park & Aquatic Center, 651 Bucher Ave, Santa Clara",
+  lat: 37.3533,
+  lng: -121.9694,
+  url: "https://www.santaclaraca.gov/our-city/departments-g-z/parks-recreation/recreation-programs/swimming",
+  scheduleEndsAt: new Date("2026-09-01T00:00:00-07:00"),
+  sessions: [
+    // Jun 8 – Aug 1: Mon/Wed/Sun 1–4 PM
+    {
+      title: "Recreation Swim",
+      startDate: "2026-06-08", endDate: "2026-08-01",
+      days: [0, 1, 3], startTime: "13:00", endTime: "16:00",
+    },
+    // Aug 2 – Aug 30: Sun only 1–4 PM
+    {
+      title: "Recreation Swim",
+      startDate: "2026-08-02", endDate: "2026-08-30",
+      days: [0], startTime: "13:00", endTime: "16:00",
+    },
+  ],
+});
+
+// Santa Clara — Warburton Park & Aquatic Center
+// Source: https://www.santaclaraca.gov/our-city/departments-g-z/parks-recreation/recreation-programs/swimming
+// Season: Jun 8 – Aug 29 2026
+export const santaClaraWarburtonPoolSource = makePoolSource({
+  id: "santaClaraWarburtonPool",
+  name: "SC Warburton Aquatic Center",
+  location: "Warburton Park & Aquatic Center, 2250 Royal Dr, Santa Clara",
+  lat: 37.3697,
+  lng: -121.9517,
+  url: "https://www.santaclaraca.gov/our-city/departments-g-z/parks-recreation/recreation-programs/swimming",
+  scheduleEndsAt: new Date("2026-09-01T00:00:00-07:00"),
+  sessions: [
+    // Jun 8 – Jul 31: Tue/Thu/Fri/Sat 1–4 PM
+    {
+      title: "Recreation Swim",
+      startDate: "2026-06-08", endDate: "2026-07-31",
+      days: [2, 4, 5, 6], startTime: "13:00", endTime: "16:00",
+    },
+    // Aug 1 – Aug 29: Sat only 1–4 PM
+    {
+      title: "Recreation Swim",
+      startDate: "2026-08-01", endDate: "2026-08-29",
+      days: [6], startTime: "13:00", endTime: "16:00",
+    },
+  ],
+});
+
+// Cupertino — Blackberry Farm Pool
+// Source: https://www.cupertino.gov/Parks-Recreation/Aquatics-and-Golf/Blackberry-Farm/Aquatics
+// Season: late May – Labor Day 2026 (exact dates: verify each season)
+export const cupertinoBlackberryPoolSource = makePoolSource({
+  id: "cupertinoBlackberryPool",
+  name: "Cupertino Blackberry Farm Pool",
+  location: "Blackberry Farm Pool, 21979 San Fernando Ave, Cupertino",
+  lat: 37.3168,
+  lng: -122.0502,
+  url: "https://www.cupertino.gov/Parks-Recreation/Aquatics-and-Golf/Blackberry-Farm/Aquatics",
+  scheduleEndsAt: new Date("2026-09-08T00:00:00-07:00"),
+  sessions: [
+    // Tue–Fri noon–6 PM
+    {
+      title: "Recreation Swim",
+      startDate: "2026-05-23", endDate: "2026-09-07",
+      days: [2, 3, 4, 5], startTime: "12:00", endTime: "18:00",
+    },
+    // Sat–Sun 10 AM–6 PM
+    {
+      title: "Recreation Swim",
+      startDate: "2026-05-23", endDate: "2026-09-07",
+      days: [0, 6], startTime: "10:00", endTime: "18:00",
+    },
+  ],
+});
+
+// Daly City — Giammona Pool
+// Source: https://www.dalycity.org/330/Aquatics
+// Season: Jun–Aug 2026. Reservation required via dalycity.org/iplay.
+export const dalyCityPoolSource = makePoolSource({
+  id: "dalyCityPool",
+  name: "Daly City Giammona Pool",
+  location: "Giammona Pool, 131 Westmoor Ave, Daly City",
+  lat: 37.6804,
+  lng: -122.4690,
+  url: "https://www.dalycity.org/330/Aquatics",
+  scheduleEndsAt: new Date("2026-09-01T00:00:00-07:00"),
+  sessions: [
+    // Sat–Sun 12:30–2:30 PM (Jun 6 – Aug 30)
+    {
+      title: "Recreation Swim",
+      startDate: "2026-06-06", endDate: "2026-08-30",
+      days: [0, 6], startTime: "12:30", endTime: "14:30",
+    },
+  ],
+});
+
+// Campbell — Community Center Pool
+// Source: https://www.campbellca.gov/1312/Recreation-Swim
+// Season: Jun 16 – Aug 7 2026. Closed Jul 3–4.
+export const campbellPoolSource = makePoolSource({
+  id: "campbellPool",
+  name: "Campbell Community Center Pool",
+  location: "Campbell Community Center Pool, 1 W Campbell Ave, Campbell",
+  lat: 37.2872,
+  lng: -121.9509,
+  url: "https://www.campbellca.gov/1312/Recreation-Swim",
+  scheduleEndsAt: new Date("2026-08-08T00:00:00-07:00"),
+  sessions: [
+    // Tue–Fri 1:30–3 PM (Jun 16 – Aug 7). Closed Jul 3.
+    {
+      title: "Recreation Swim",
+      startDate: "2026-06-16", endDate: "2026-08-07",
+      days: [2, 3, 4, 5], startTime: "13:30", endTime: "15:00",
+    },
+    // Sat 12:30–2 PM — Social Hour Swim (Jun 21 – Aug 1). Closed Jul 4.
+    {
+      title: "Social Hour Swim",
+      startDate: "2026-06-21", endDate: "2026-08-01",
+      days: [6], startTime: "12:30", endTime: "14:00",
+    },
+  ],
+});
+
+// San Mateo — Joinville Swim Center
+// Source: https://www.cityofsanmateo.org/3534/Aquatics
+// Season: Jun 15 – Aug 8 2026
+export const sanMateoJoinvillePoolSource = makePoolSource({
+  id: "sanMateoJoinvillePool",
+  name: "San Mateo Joinville Swim Center",
+  location: "Joinville Swim Center, 2111 Kehoe Ave, San Mateo",
+  lat: 37.5621,
+  lng: -122.2983,
+  url: "https://www.cityofsanmateo.org/3534/Aquatics",
+  scheduleEndsAt: new Date("2026-08-09T00:00:00-07:00"),
+  sessions: [
+    // Mon–Thu 1–3:30 PM
+    {
+      title: "Recreation Swim",
+      startDate: "2026-06-15", endDate: "2026-08-08",
+      days: [1, 2, 3, 4], startTime: "13:00", endTime: "15:30",
+    },
+    // Sat 1:30–5 PM
+    {
+      title: "Recreation Swim",
+      startDate: "2026-06-20", endDate: "2026-08-08",
+      days: [6], startTime: "13:30", endTime: "17:00",
+    },
+  ],
+});
+
+// San Mateo — King Swim Center
+// Source: https://www.cityofsanmateo.org/3534/Aquatics
+// Season: Jun 15 – Aug 8 2026
+export const sanMateoKingPoolSource = makePoolSource({
+  id: "sanMateoKingPool",
+  name: "San Mateo King Swim Center",
+  location: "King Swim Center, 725 Monte Diablo Ave, San Mateo",
+  lat: 37.5648,
+  lng: -122.3141,
+  url: "https://www.cityofsanmateo.org/3534/Aquatics",
+  scheduleEndsAt: new Date("2026-08-09T00:00:00-07:00"),
+  sessions: [
+    // Mon–Thu 1–3:30 PM
+    {
+      title: "Recreation Swim",
+      startDate: "2026-06-15", endDate: "2026-08-08",
+      days: [1, 2, 3, 4], startTime: "13:00", endTime: "15:30",
+    },
+    // Sat 1:30–5 PM
+    {
+      title: "Recreation Swim",
+      startDate: "2026-06-20", endDate: "2026-08-08",
+      days: [6], startTime: "13:30", endTime: "17:00",
+    },
+    // Sun noon–4 PM (King only)
+    {
+      title: "Recreation Swim",
+      startDate: "2026-06-21", endDate: "2026-08-08",
+      days: [0], startTime: "12:00", endTime: "16:00",
+    },
+  ],
+});

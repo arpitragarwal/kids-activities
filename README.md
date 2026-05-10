@@ -58,6 +58,39 @@ park list, ranks them against weather/age/distance, and refreshes hourly via cro
 
 When a source breaks it shows up on `/health` with the last error.
 
+### Pools
+
+Hardcoded seasonal schedules in `src/lib/sources/pools.ts`. Each pool shows as **stale** on `/health` once its `scheduleEndsAt` passes — update `sessions[]` and bump the date each season.
+
+| Id | Pool | Season |
+|----|------|--------|
+| `mvPool` | MV Rengstorff Park Aquatics Center | May 23 – Aug 31 2026 |
+| `eaglePool` | MV Eagle Park Pool | Jun 15 – Aug 31 2026 |
+| `santaClaraGomezPool` | Santa Clara Mary Gomez Aquatic Center | Jun 8 – Aug 30 2026 |
+| `santaClaraWarburtonPool` | Santa Clara Warburton Aquatic Center | Jun 8 – Aug 29 2026 |
+| `cupertinoBlackberryPool` | Cupertino Blackberry Farm Pool | May 23 – Sep 7 2026 (verify each season) |
+| `dalyCityPool` | Daly City Giammona Pool | Jun 6 – Aug 30 2026 |
+| `campbellPool` | Campbell Community Center Pool | Jun 16 – Aug 7 2026 |
+| `sanMateoJoinvillePool` | San Mateo Joinville Swim Center | Jun 15 – Aug 8 2026 |
+| `sanMateoKingPool` | San Mateo King Swim Center | Jun 15 – Aug 8 2026 |
+
+#### Pools not yet integrated
+
+| Pool | City | Schedule URL | Blocker |
+|------|------|-------------|---------|
+| Rancho Rinconada Pool | Cupertino | https://ranchopool.org/rec-swim/ | 2026 hours not yet published on site; opens May 9 |
+| Washington Swim Center / Swim Complex | Sunnyvale | https://www.sunnyvale.ca.gov/recreation-and-community/classes-and-activities/aquatics/pools | Drop-in hours not prominently published |
+| Mission Pool | San Francisco | https://sfrecpark.org/facilities/facility/details/Mission-Community-Pool-217 | Rec swim hours only in PDF schedule |
+| Fair / Camden / Mayfair / Rotary Ryland pools | San Jose | https://www.sanjoseca.gov/your-government/departments-offices/parks-recreation-neighborhood-services/athletics-fitness/swimming-and-pools | Hours buried in ActiveNet registration portal |
+| Red Morton Community Center Pool | Redwood City | https://www.redwoodcity.org/departments/parks-recreation-and-community-services/sports/aquatics | Schedule not prominently published |
+| Rinconada Pool | Palo Alto | https://paloaltoswim.com/pool-schedule/ | Schedule is a PDF download, not HTML |
+| Burgess Pool | Menlo Park | https://menloswim.com/about/locations/burgess-location/ | Operated by third-party; rec swim window unclear |
+| Silliman Activity & Family Aquatic Center | Newark | https://www.newarkca.gov/departments/recreation-and-community-services/aquatic-center-hours | Indoor waterpark (slides/lazy river), not traditional rec swim |
+| Aqua Adventure Waterpark | Fremont | https://goaquaadventure.com/hours-info.php | Waterpark, not a traditional pool |
+| Dan Oden Swim Complex | Union City | https://www.unioncityca.gov/616/Aquatics | Potential 2026 renovation closure — verify before adding |
+| LGHS Community Aquatic Center | Los Gatos | https://www.lgsrecreation.org/aquatics/ | Primarily lap swim; rec swim availability unclear |
+| Belle Haven Pool | Menlo Park | https://www.menlopark.gov/Venues/Belle-Haven-Pool | Reported closed as of March 2026 |
+
 ### Sources not yet integrated
 
 | Source | System | Blocker |

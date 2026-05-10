@@ -30,7 +30,13 @@ const GROUPS = [
   },
   {
     label: "Pools",
-    ids: ["mvPool", "eaglePool"],
+    ids: [
+      "mvPool", "eaglePool",
+      "santaClaraGomezPool", "santaClaraWarburtonPool",
+      "cupertinoBlackberryPool",
+      "dalyCityPool", "campbellPool",
+      "sanMateoJoinvillePool", "sanMateoKingPool",
+    ],
   },
 ];
 
@@ -58,8 +64,15 @@ const SHORT_NAME: Record<string, string> = {
   // Places
   parks:                  "MV Parks",
   // Pools
-  mvPool:                 "MV Rengstorff",
-  eaglePool:              "MV Eagle Park",
+  mvPool:                   "MV Rengstorff",
+  eaglePool:                "MV Eagle Park",
+  santaClaraGomezPool:      "SC Mary Gomez",
+  santaClaraWarburtonPool:  "SC Warburton",
+  cupertinoBlackberryPool:  "Cupertino BFarm",
+  dalyCityPool:             "Daly City",
+  campbellPool:             "Campbell",
+  sanMateoJoinvillePool:    "SM Joinville",
+  sanMateoKingPool:         "SM King",
 };
 
 // ─── Status styles ────────────────────────────────────────────────────────
