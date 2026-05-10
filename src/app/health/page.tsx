@@ -30,7 +30,7 @@ const GROUPS = [
   },
   {
     label: "Pools",
-    ids: ["mvPool"],
+    ids: ["mvPool", "eaglePool"],
   },
 ];
 
@@ -59,6 +59,7 @@ const SHORT_NAME: Record<string, string> = {
   parks:                  "MV Parks",
   // Pools
   mvPool:                 "MV Rengstorff",
+  eaglePool:              "MV Eagle Park",
 };
 
 // ─── Status styles ────────────────────────────────────────────────────────

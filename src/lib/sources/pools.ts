@@ -126,11 +126,34 @@ export const mvPoolSource = makePoolSource({
       startDate: "2026-06-15", endDate: "2026-08-31",
       days: [0, 6], startTime: "13:30", endTime: "18:30",
     },
-    // Night Rec Swim: Fri 5–7 PM (Jun 26, Jul 3, 10, 17, 24, 31)
+    // Night Rec Swim: Fri 5–7 PM (Jun 26, Jul 3, 10, 17, 24, 31, Aug 7)
     {
       title: "Night Recreation Swim",
-      startDate: "2026-06-26", endDate: "2026-07-31",
+      startDate: "2026-06-26", endDate: "2026-08-07",
       days: [5], startTime: "17:00", endTime: "19:00",
+    },
+  ],
+});
+
+// Mountain View — Eagle Park Pool
+// Source: https://www.mountainview.gov/our-city/departments/community-services/recreation/aquatics-pools/recreation-swim
+// Season: Jun 15 – Aug 31 2026. Closed Jun 19 & Jul 3.
+// To update: edit sessions[] below and bump scheduleEndsAt to end of next season.
+export const eaglePoolSource = makePoolSource({
+  id: "eaglePool",
+  name: "MV Eagle Park Pool",
+  location: "Eagle Park Pool, 401 Diana Ct, Mountain View",
+  lat: 37.4036,
+  lng: -122.0814,
+  url: "https://www.mountainview.gov/our-city/departments/community-services/recreation/aquatics-pools/recreation-swim",
+  scheduleEndsAt: new Date("2026-09-01T00:00:00-07:00"),
+  sessions: [
+    // Mon–Fri 12:30–2:30 PM (Jun 15 – Aug 31)
+    // Note: closed Jun 19 (Fri) and Jul 3 (Fri)
+    {
+      title: "Recreation Swim",
+      startDate: "2026-06-15", endDate: "2026-08-31",
+      days: [1, 2, 3, 4, 5], startTime: "12:30", endTime: "14:30",
     },
   ],
 });

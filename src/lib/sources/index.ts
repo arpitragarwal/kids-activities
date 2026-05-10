@@ -17,7 +17,7 @@ import {
 } from "./bibliocommons";
 import { parksSource } from "./parks";
 import { musicTogetherSource } from "./musicTogether";
-import { mvPoolSource } from "./pools";
+import { mvPoolSource, eaglePoolSource } from "./pools";
 
 export const SOURCES: SourceDefinition[] = [
   // City Recreation
@@ -49,6 +49,7 @@ export const SOURCES: SourceDefinition[] = [
   musicTogetherSource,
   // Pools (hardcoded seasonal schedules — update each season)
   mvPoolSource,
+  eaglePoolSource,
 ];
 
 export interface RefreshOutcome {
