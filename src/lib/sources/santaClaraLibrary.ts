@@ -3,7 +3,9 @@ import type { SourceDefinition, NormalizedEvent, Indoorness } from "../types";
 
 // Santa Clara City Library
 // URL: https://www.sclibrary.org/calendar/events/-curm-{M}/-cury-{Y}
-// Server-rendered HTML. May return 403 on residential/scraper IPs — expected to work on Vercel.
+// Server-rendered HTML behind Akamai — needs a full Chrome-like header set
+// (sec-ch-ua, Sec-Fetch-*, Upgrade-Insecure-Requests, Accept-Encoding) to pass
+// the bot check. A bare User-Agent returns 403.
 
 const BASE_URL = "https://www.sclibrary.org";
 const TZ = "America/Los_Angeles";
@@ -185,9 +187,20 @@ export const santaClaraLibrarySource: SourceDefinition = {
 
       const res = await fetch(url, {
         headers: {
-          "User-Agent": "Mozilla/5.0 (compatible; kids-activities/1.0; +https://kidsactivities.vercel.app)",
-          "Accept": "text/html,application/xhtml+xml",
+          "User-Agent":
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36",
+          "Accept":
+            "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
           "Accept-Language": "en-US,en;q=0.9",
+          "Accept-Encoding": "gzip, deflate, br",
+          "sec-ch-ua": '"Chromium";v="126", "Not.A/Brand";v="24"',
+          "sec-ch-ua-mobile": "?0",
+          "sec-ch-ua-platform": '"macOS"',
+          "Sec-Fetch-Dest": "document",
+          "Sec-Fetch-Mode": "navigate",
+          "Sec-Fetch-Site": "none",
+          "Sec-Fetch-User": "?1",
+          "Upgrade-Insecure-Requests": "1",
         },
         cache: "no-store",
       });
