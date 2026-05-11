@@ -11,7 +11,6 @@ import { parseScheduleLabel } from "@/lib/schedule";
 import { ContextHeader } from "@/components/ContextHeader";
 import { EventList } from "@/components/EventList";
 import type { DayData } from "@/components/EventList";
-import Link from "next/link";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -161,22 +160,9 @@ export default async function HomePage({
         cfg={cfg}
         status={params.status}
         error={params.error}
+        brokenCount={broken.length}
       />
 
-      {broken.length > 0 && (
-        <div className="flex items-start gap-2.5 bg-amber-50 border border-amber-200 rounded-xl px-3.5 py-3 mb-5 text-sm text-amber-900">
-          <span className="text-base leading-none mt-0.5">⚠️</span>
-          <div>
-            <span className="font-medium">
-              {broken.length} source{broken.length === 1 ? "" : "s"} need attention
-            </span>{" "}
-            —{" "}
-            <Link href="/health" className="underline underline-offset-2">
-              view source health →
-            </Link>
-          </div>
-        </div>
-      )}
 
       {totalEvents === 0 ? (
         <div className="border border-dashed border-stone-300 rounded-xl p-10 text-center bg-white">

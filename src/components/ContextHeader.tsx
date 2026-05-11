@@ -235,6 +235,7 @@ export function ContextHeader({
   cfg,
   status,
   error,
+  brokenCount = 0,
 }: {
   wx: WeatherSummary | null;
   fetchedAt: Date | null;
@@ -243,6 +244,7 @@ export function ContextHeader({
   cfg: EffectiveConfig;
   status?: string;
   error?: string;
+  brokenCount?: number;
 }) {
   const [editing, setEditing] = useState(false);
 
@@ -263,7 +265,13 @@ export function ContextHeader({
       <div className="pb-4 border-b border-stone-200 mb-5">
         <div className="flex items-start justify-between gap-5">
           <div>
-            <p className="text-[11.5px] font-medium text-stone-400 mb-1">{dateLabel} · {currentTime}</p>
+            <p className="text-[11.5px] font-medium text-stone-400 mb-1 flex items-center gap-1.5">
+              <span>{dateLabel} · {currentTime}</span>
+              <a href="/health" className="inline-flex items-center gap-1 ml-1 hover:text-stone-600 transition-colors">
+                {brokenCount > 0 && <span className="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0" />}
+                <span>Sources</span>
+              </a>
+            </p>
             <p className="text-2xl font-semibold tracking-tight text-stone-900">{dateLabel}</p>
             <p className="text-sm text-stone-400 mt-1">
               Weather not yet fetched.{" "}
@@ -293,8 +301,12 @@ export function ContextHeader({
       <div className="flex items-start justify-between gap-5">
         {/* Left: date + weather */}
         <div>
-          <p className="text-[11.5px] font-medium text-stone-400 mb-1">
-            {dateLabel} · {currentTime}
+          <p className="text-[11.5px] font-medium text-stone-400 mb-1 flex items-center gap-1.5">
+            <span>{dateLabel} · {currentTime}</span>
+            <a href="/health" className="inline-flex items-center gap-1 ml-1 hover:text-stone-600 transition-colors">
+              {brokenCount > 0 && <span className="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0" />}
+              <span>Sources</span>
+            </a>
           </p>
           <h1 className="text-[26px] font-semibold tracking-tight text-stone-900 flex items-center gap-2 flex-wrap leading-tight">
             <span>{icon}</span>
