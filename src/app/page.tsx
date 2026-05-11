@@ -160,7 +160,6 @@ export default async function HomePage({
         cfg={cfg}
         status={params.status}
         error={params.error}
-        brokenCount={broken.length}
       />
 
 

@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import { DM_Sans, DM_Mono } from "next/font/google";
 import Link from "next/link";
 import { Analytics } from "@vercel/analytics/next";
-import { SOURCES } from "@/lib/sources";
+import { SOURCES, getSourceHealth } from "@/lib/sources";
 
 const dmSans = DM_Sans({
   subsets: ["latin"],
@@ -25,7 +25,10 @@ export const metadata: Metadata = {
   description: "Activities for little kids in Mountain View and the Bay Area",
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const health = await getSourceHealth().catch(() => []);
+  const brokenCount = health.filter((h) => h.status === "broken" || h.status === "stale").length;
+
   return (
     <html lang="en" className={`${dmSans.variable} ${dmMono.variable}`}>
       <body className="font-sans antialiased bg-[#faf9f6]">
@@ -60,7 +63,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 </a>
               </p>
             </div>
-            <Link href="/health" className="flex items-center gap-1.5 text-[12px] text-stone-400 hover:text-stone-600 transition-colors">
+            <Link href="/sources" className="flex items-center gap-1.5 text-[12px] text-stone-400 hover:text-stone-600 transition-colors">
+              {brokenCount > 0 && <span title={`${brokenCount} source${brokenCount === 1 ? "" : "s"} need attention`}>⚠️</span>}
               Sources
               <span className="font-mono text-[10px] bg-stone-100 text-stone-500 rounded px-1 py-0.5">{SOURCES.length}</span>
             </Link>

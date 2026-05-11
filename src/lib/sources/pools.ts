@@ -5,7 +5,7 @@ import type { SourceDefinition, NormalizedEvent } from "../types";
 // Each PoolSession becomes one evergreen DB row with a scheduleLabel. The
 // page.tsx date-range bucketing places it only on days within startDate…endDate.
 //
-// When a season ends the source shows as "stale" on /health (via scheduleEndsAt).
+// When a season ends the source shows as "stale" on /sources (via scheduleEndsAt).
 // Update sessions[] and scheduleEndsAt, then redeploy.
 
 // ─── Helpers ──────────────────────────────────────────────────────────────
@@ -43,7 +43,7 @@ interface PoolConfig {
   lng: number;
   url: string;
   /**
-   * When this date passes, /health shows the source as stale so you know to
+   * When this date passes, /sources shows the source as stale so you know to
    * update the sessions for the new season.
    */
   scheduleEndsAt: Date;

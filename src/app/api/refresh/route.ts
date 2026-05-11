@@ -10,7 +10,7 @@ function authorized(req: NextRequest): boolean {
   if (!secret) return true; // No secret configured — allow (dev mode).
   const auth = req.headers.get("authorization");
   if (auth === `Bearer ${secret}`) return true;
-  // Allow manual browser POST from the /health page if same-origin.
+  // Allow manual browser POST from the /sources page if same-origin.
   if (req.method === "POST") {
     const ref = req.headers.get("referer") ?? "";
     const host = req.headers.get("host") ?? "";
@@ -45,7 +45,7 @@ async function handle(req: NextRequest) {
           durationMs: 0,
         }));
 
-  // Browser-friendly: if same-origin POST, redirect back to /health.
+  // Browser-friendly: if same-origin POST, redirect back to /sources.
   const ref = req.headers.get("referer");
   if (req.method === "POST" && ref) {
     return NextResponse.redirect(ref, 303);
