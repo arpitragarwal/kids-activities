@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { COOKIE_MAX_AGE } from "@/lib/userPrefs";
 import { logSettingsChange } from "@/lib/analytics";
+import { isInBayArea } from "@/lib/address";
 
 export const dynamic = "force-dynamic";
 
@@ -127,7 +128,13 @@ export async function POST(req: NextRequest) {
     }
     try {
       const geo = await geocode(address);
-      return NextResponse.json({ ok: true, label: geo.label, lat: geo.lat, lng: geo.lng });
+      return NextResponse.json({
+        ok: true,
+        label: geo.label,
+        lat: geo.lat,
+        lng: geo.lng,
+        outOfArea: !isInBayArea(geo.lat, geo.lng),
+      });
     } catch (e) {
       return NextResponse.json(
         { error: e instanceof Error ? e.message : "Geocoding failed" },
@@ -221,5 +228,10 @@ export async function POST(req: NextRequest) {
     }).catch((err) => console.error("logSettingsChange failed", err));
   }
 
-  return ok(savedLabel ? { label: savedLabel } : {}, "saved");
+  const saveResult: Record<string, unknown> = {};
+  if (savedLabel) saveResult.label = savedLabel;
+  if (savedLat !== null && savedLng !== null) {
+    saveResult.outOfArea = !isInBayArea(savedLat, savedLng);
+  }
+  return ok(saveResult, "saved");
 }

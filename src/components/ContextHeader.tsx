@@ -73,8 +73,9 @@ function SettingsDrawer({
   const [ageYears, setAgeYears] = useState(String(years));
   const [ageExtraMonths, setAgeExtraMonths] = useState(String(months));
   const [address, setAddress] = useState(addrDefault);
-  const [preview, setPreview] = useState<string | null>(null);
+  const [preview, setPreview] = useState<{ label: string; outOfArea: boolean } | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [savedWarning, setSavedWarning] = useState<string | null>(null);
   const [busy, setBusy] = useState<"save" | "reset" | "check" | null>(null);
 
   const trimmedAddress = address.trim();
@@ -85,13 +86,20 @@ function SettingsDrawer({
   // visible width to them (Chrome shows spinners on hover/focus, Firefox always).
   const numInputCls = `${inputCls} [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:m-0 [&::-webkit-outer-spin-button]:m-0`;
 
-  async function postSettings(fd: FormData): Promise<{ ok?: true; error?: string; label?: string }> {
+  type SettingsResponse = {
+    ok?: true;
+    error?: string;
+    label?: string;
+    outOfArea?: boolean;
+  };
+
+  async function postSettings(fd: FormData): Promise<SettingsResponse> {
     const res = await fetch("/api/settings", {
       method: "POST",
       body: fd,
       headers: { Accept: "application/json" },
     });
-    const data = (await res.json().catch(() => ({}))) as { ok?: true; error?: string; label?: string };
+    const data = (await res.json().catch(() => ({}))) as SettingsResponse;
     if (!res.ok) {
       throw new Error(data.error ?? `Request failed (${res.status})`);
     }
@@ -112,7 +120,9 @@ function SettingsDrawer({
       fd.set("action", "preview");
       fd.set("address", trimmedAddress);
       const data = await postSettings(fd);
-      setPreview(data.label ?? null);
+      if (data.label) {
+        setPreview({ label: data.label, outOfArea: data.outOfArea === true });
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : "Geocoding failed");
     } finally {
@@ -124,15 +134,22 @@ function SettingsDrawer({
     e.preventDefault();
     setBusy("save");
     setError(null);
+    setSavedWarning(null);
     try {
       const fd = new FormData();
       fd.set("action", "save");
       fd.set("ageYears", ageYears);
       fd.set("ageExtraMonths", ageExtraMonths);
       if (addressChanged && trimmedAddress) fd.set("address", trimmedAddress);
-      await postSettings(fd);
+      const data = await postSettings(fd);
       router.refresh();
-      onClose();
+      if (data.outOfArea && data.label) {
+        // Saved successfully, but the resolved point is outside the Bay Area
+        // bounding box. Keep the drawer open so the user sees the warning.
+        setSavedWarning(`Saved, but ${data.label} is outside the SF Bay Area. Activity sources are Bay Area only — results may be sparse.`);
+      } else {
+        onClose();
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : "Save failed");
     } finally {
@@ -203,6 +220,7 @@ function SettingsDrawer({
                   setAddress(e.target.value);
                   setPreview(null);
                   if (error) setError(null);
+                  if (savedWarning) setSavedWarning(null);
                 }}
                 className={`flex-1 min-w-0 ${inputCls}`}
               />
@@ -217,8 +235,13 @@ function SettingsDrawer({
               </button>
             </div>
             {preview && (
-              <p className="text-[11.5px] text-emerald-700 leading-snug">
-                ✓ Matches: {preview}
+              <p className={`text-[11.5px] leading-snug ${preview.outOfArea ? "text-stone-500" : "text-emerald-700"}`}>
+                {preview.outOfArea ? "○" : "✓"} Matches: {preview.label}
+              </p>
+            )}
+            {preview?.outOfArea && (
+              <p className="text-[11.5px] text-amber-700 leading-snug">
+                ⚠ Outside the SF Bay Area — activity sources won&apos;t have coverage here.
               </p>
             )}
             {!preview && !addressChanged && addrDefault && (
@@ -261,6 +284,23 @@ function SettingsDrawer({
         <p className="mt-2 text-xs text-red-600" role="alert">
           {error}
         </p>
+      )}
+      {savedWarning && (
+        <div className="mt-2 flex items-start justify-between gap-3 rounded-lg bg-amber-50 border border-amber-200 px-3 py-2">
+          <p className="text-xs text-amber-800 leading-snug">
+            ⚠ {savedWarning}
+          </p>
+          <button
+            type="button"
+            onClick={() => {
+              setSavedWarning(null);
+              onClose();
+            }}
+            className="shrink-0 text-xs text-amber-900 underline hover:no-underline"
+          >
+            Got it
+          </button>
+        </div>
       )}
     </div>
   );

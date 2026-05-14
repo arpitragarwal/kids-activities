@@ -31,3 +31,23 @@ export function coarseLatLng(lat: number, lng: number): { lat: number; lng: numb
     lng: Math.round(lng * 1000) / 1000,
   };
 }
+
+// Generous bounding box covering the 9-county SF Bay Area: Sonoma/Napa in the
+// north down to southern Santa Clara, ocean west, eastern Contra Costa east.
+const BAY_AREA_BBOX = {
+  minLat: 36.85,
+  maxLat: 38.55,
+  minLng: -123.10,
+  maxLng: -121.20,
+};
+
+export function isInBayArea(lat: number, lng: number): boolean {
+  return (
+    Number.isFinite(lat) &&
+    Number.isFinite(lng) &&
+    lat >= BAY_AREA_BBOX.minLat &&
+    lat <= BAY_AREA_BBOX.maxLat &&
+    lng >= BAY_AREA_BBOX.minLng &&
+    lng <= BAY_AREA_BBOX.maxLng
+  );
+}
