@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { formatInTimeZone } from "date-fns-tz";
 import type { WeatherSummary } from "@/lib/weather";
 import type { EffectiveConfig } from "@/lib/userPrefs";
@@ -84,97 +85,206 @@ const WX_ADVICE_COLOR: Record<WxTone, string> = {
 
 function SettingsDrawer({
   cfg,
-  status,
-  error,
   onClose,
 }: {
   cfg: EffectiveConfig;
-  status?: string;
-  error?: string;
   onClose: () => void;
 }) {
+  const router = useRouter();
   const { years, months } = splitYearsMonths(cfg.child.ageMonths);
   const addrDefault = cfg.home.isDefault ? "" : cfg.home.label;
 
+  const [ageYears, setAgeYears] = useState(String(years));
+  const [ageExtraMonths, setAgeExtraMonths] = useState(String(months));
+  const [address, setAddress] = useState(addrDefault);
+  const [preview, setPreview] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState<"save" | "reset" | "check" | null>(null);
+
+  const trimmedAddress = address.trim();
+  const addressChanged = trimmedAddress !== addrDefault.trim();
+
   const inputCls = "rounded-lg border border-stone-200 bg-white px-2.5 py-1.5 text-sm outline-none focus:border-stone-400 transition-colors";
+
+  async function postSettings(fd: FormData): Promise<{ ok?: true; error?: string; label?: string }> {
+    const res = await fetch("/api/settings", {
+      method: "POST",
+      body: fd,
+      headers: { Accept: "application/json" },
+    });
+    const data = (await res.json().catch(() => ({}))) as { ok?: true; error?: string; label?: string };
+    if (!res.ok) {
+      throw new Error(data.error ?? `Request failed (${res.status})`);
+    }
+    return data;
+  }
+
+  async function handleCheck() {
+    if (!trimmedAddress) {
+      setError("Enter an address to check");
+      setPreview(null);
+      return;
+    }
+    setBusy("check");
+    setError(null);
+    setPreview(null);
+    try {
+      const fd = new FormData();
+      fd.set("action", "preview");
+      fd.set("address", trimmedAddress);
+      const data = await postSettings(fd);
+      setPreview(data.label ?? null);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Geocoding failed");
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  async function handleSave(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setBusy("save");
+    setError(null);
+    try {
+      const fd = new FormData();
+      fd.set("action", "save");
+      fd.set("ageYears", ageYears);
+      fd.set("ageExtraMonths", ageExtraMonths);
+      if (addressChanged && trimmedAddress) fd.set("address", trimmedAddress);
+      await postSettings(fd);
+      router.refresh();
+      onClose();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Save failed");
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  async function handleReset() {
+    setBusy("reset");
+    setError(null);
+    try {
+      const fd = new FormData();
+      fd.set("action", "reset");
+      await postSettings(fd);
+      router.refresh();
+      onClose();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Reset failed");
+    } finally {
+      setBusy(null);
+    }
+  }
 
   return (
     <div className="mt-3 bg-white border border-stone-200 rounded-xl px-4 py-3.5 shadow-sm animate-in fade-in slide-in-from-top-1 duration-150">
-      <form action="/api/settings" method="post" className="flex flex-wrap items-end gap-x-4 gap-y-3">
-        {/* Age */}
-        <div className="flex flex-col gap-1.5">
-          <label className="text-[10.5px] font-semibold uppercase tracking-widest text-stone-400">
-            Child&apos;s age
-          </label>
-          <div className="flex items-center gap-1.5">
-            <input
-              name="ageYears"
-              type="number"
-              min={0}
-              max={20}
-              defaultValue={years}
-              aria-label="Years"
-              className={`w-14 text-center ${inputCls}`}
-            />
-            <span className="text-xs text-stone-400">y</span>
-            <input
-              name="ageExtraMonths"
-              type="number"
-              min={0}
-              max={11}
-              defaultValue={months}
-              aria-label="Months"
-              className={`w-14 text-center ${inputCls}`}
-            />
-            <span className="text-xs text-stone-400">m</span>
+      <form onSubmit={handleSave} className="flex flex-col gap-3">
+        <div className="flex flex-wrap items-start gap-x-4 gap-y-3">
+          {/* Age */}
+          <div className="flex flex-col gap-1.5 shrink-0">
+            <label className="text-[10.5px] font-semibold uppercase tracking-widest text-stone-400">
+              Age
+            </label>
+            <div className="flex items-center gap-1">
+              <div className="relative">
+                <input
+                  type="number"
+                  min={0}
+                  max={20}
+                  value={ageYears}
+                  onChange={(e) => setAgeYears(e.target.value)}
+                  aria-label="Years"
+                  className={`w-12 pr-4 text-center ${inputCls}`}
+                />
+                <span className="pointer-events-none absolute right-1.5 top-1/2 -translate-y-1/2 text-[10px] text-stone-400">y</span>
+              </div>
+              <div className="relative">
+                <input
+                  type="number"
+                  min={0}
+                  max={11}
+                  value={ageExtraMonths}
+                  onChange={(e) => setAgeExtraMonths(e.target.value)}
+                  aria-label="Months"
+                  className={`w-12 pr-5 text-center ${inputCls}`}
+                />
+                <span className="pointer-events-none absolute right-1.5 top-1/2 -translate-y-1/2 text-[10px] text-stone-400">m</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Address */}
+          <div className="flex flex-col gap-1.5 flex-1 min-w-[240px]">
+            <label className="text-[10.5px] font-semibold uppercase tracking-widest text-stone-400">
+              Home address
+            </label>
+            <div className="flex items-center gap-2">
+              <input
+                type="text"
+                placeholder="500 Castro St, Mountain View"
+                value={address}
+                onChange={(e) => {
+                  setAddress(e.target.value);
+                  setPreview(null);
+                  if (error) setError(null);
+                }}
+                className={`flex-1 min-w-0 ${inputCls}`}
+              />
+              <button
+                type="button"
+                onClick={handleCheck}
+                disabled={busy !== null || !trimmedAddress || !addressChanged}
+                className="shrink-0 px-2.5 py-1.5 rounded-lg border border-stone-200 text-xs text-stone-600 hover:bg-stone-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                title="Geocode this address and show the match before saving"
+              >
+                {busy === "check" ? "Checking…" : "Check"}
+              </button>
+            </div>
+            {preview && (
+              <p className="text-[11.5px] text-emerald-700 leading-snug">
+                ✓ Matches: {preview}
+              </p>
+            )}
+            {!preview && !addressChanged && addrDefault && (
+              <p className="text-[11.5px] text-stone-400 leading-snug truncate" title={addrDefault}>
+                Currently: {addrDefault}
+              </p>
+            )}
           </div>
         </div>
 
-        {/* Address */}
-        <div className="flex flex-col gap-1.5 flex-1 min-w-[200px]">
-          <label className="text-[10.5px] font-semibold uppercase tracking-widest text-stone-400">
-            Home address
-          </label>
-          <input
-            name="address"
-            type="text"
-            placeholder="500 Castro St, Mountain View"
-            defaultValue={addrDefault}
-            className={`w-full ${inputCls}`}
-          />
-        </div>
-
         {/* Actions */}
-        <div className="flex gap-2">
+        <div className="flex items-center justify-end gap-2 pt-1 border-t border-stone-100">
           <button
-            type="submit"
-            name="action"
-            value="save"
-            className="px-4 py-1.5 rounded-lg bg-stone-900 text-white text-sm font-medium hover:bg-stone-700 transition-colors"
+            type="button"
+            onClick={onClose}
+            disabled={busy !== null}
+            className="px-2 py-1.5 text-xs text-stone-400 hover:text-stone-600 disabled:opacity-60 transition-colors mr-auto"
           >
-            Save
+            Cancel
           </button>
           <button
-            type="submit"
-            name="action"
-            value="reset"
-            className="px-3 py-1.5 rounded-lg border border-stone-200 text-xs text-stone-600 hover:bg-stone-100 transition-colors"
+            type="button"
+            onClick={handleReset}
+            disabled={busy !== null}
+            className="px-3 py-1.5 rounded-lg border border-stone-200 text-xs text-stone-600 hover:bg-stone-100 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
           >
             Reset
           </button>
           <button
-            type="button"
-            onClick={onClose}
-            className="px-2 py-1.5 text-xs text-stone-400 hover:text-stone-600 transition-colors"
+            type="submit"
+            disabled={busy !== null}
+            className="px-4 py-1.5 rounded-lg bg-stone-900 text-white text-sm font-medium hover:bg-stone-700 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
           >
-            Cancel
+            {busy === "save" ? "Saving…" : "Save"}
           </button>
         </div>
       </form>
 
-      {(status || error) && (
-        <p className={`mt-2 text-xs ${error ? "text-red-600" : "text-emerald-700"}`}>
-          {error ?? (status === "saved" ? "Saved." : "Reverted to defaults.")}
+      {error && (
+        <p className="mt-2 text-xs text-red-600" role="alert">
+          {error}
         </p>
       )}
     </div>
@@ -233,16 +343,12 @@ export function ContextHeader({
   dateLabel,
   currentTime,
   cfg,
-  status,
-  error,
 }: {
   wx: WeatherSummary | null;
   fetchedAt: Date | null;
   dateLabel: string;
   currentTime: string;
   cfg: EffectiveConfig;
-  status?: string;
-  error?: string;
 }) {
   const [editing, setEditing] = useState(false);
 
@@ -278,7 +384,7 @@ export function ContextHeader({
           />
         </div>
         {editing && (
-          <SettingsDrawer cfg={cfg} status={status} error={error} onClose={() => setEditing(false)} />
+          <SettingsDrawer cfg={cfg} onClose={() => setEditing(false)} />
         )}
       </div>
     );
@@ -321,7 +427,7 @@ export function ContextHeader({
       </div>
 
       {editing && (
-        <SettingsDrawer cfg={cfg} status={status} error={error} onClose={() => setEditing(false)} />
+        <SettingsDrawer cfg={cfg} onClose={() => setEditing(false)} />
       )}
     </div>
   );

@@ -42,14 +42,9 @@ function computeTopPicks(events: RankedEvent[]): { topPicks: RankedEvent[]; rest
   };
 }
 
-export default async function HomePage({
-  searchParams,
-}: {
-  searchParams: Promise<{ status?: string; error?: string }>;
-}) {
+export default async function HomePage() {
   const now = new Date();
   const cfg = await getEffectiveConfig();
-  const params = await searchParams;
   // Compute start/end in Pacific time so the week strip aligns with the user's day,
   // not UTC midnight (which is 5 PM Pacific and would show yesterday as "today").
   const todayPacific = formatInTimeZone(now, config.timezone, "yyyy-MM-dd");
@@ -158,8 +153,6 @@ export default async function HomePage({
         dateLabel={dateLabel}
         currentTime={currentTime}
         cfg={cfg}
-        status={params.status}
-        error={params.error}
       />
 
 

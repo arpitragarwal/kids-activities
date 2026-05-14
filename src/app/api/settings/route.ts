@@ -10,30 +10,89 @@ interface Geo {
   label: string;
 }
 
-async function geocode(query: string): Promise<Geo> {
-  // Only append Bay Area context when the input looks like a bare street (no city/state).
-  // A bare street has no comma and no state abbreviation.
-  const looksLikeBareStreet = !query.includes(",") && !/\b(ca|california|sf|san francisco|san jose|oakland)\b/i.test(query);
-  const biased = looksLikeBareStreet ? `${query}, San Francisco Bay Area, CA` : query;
+// Known Bay Area cities, sorted longest-first so multi-word names match before
+// single-word substrings (e.g. "South San Francisco" before "San Francisco").
+const BAY_AREA_CITIES = [
+  "South San Francisco", "San Francisco", "San Jose", "San Mateo", "San Carlos",
+  "San Bruno", "San Ramon", "San Leandro", "San Rafael", "San Pablo",
+  "Mountain View", "Palo Alto", "East Palo Alto", "Los Altos", "Los Gatos",
+  "Menlo Park", "Redwood City", "Foster City", "Half Moon Bay", "Daly City",
+  "Walnut Creek", "Castro Valley", "Union City", "Morgan Hill",
+  "Sunnyvale", "Cupertino", "Santa Clara", "Campbell", "Saratoga", "Milpitas",
+  "Fremont", "Newark", "Hayward", "Oakland", "Berkeley", "Alameda", "Emeryville",
+  "Albany", "Richmond", "El Cerrito", "Concord", "Pleasanton", "Livermore",
+  "Dublin", "Danville", "Lafayette", "Orinda", "Moraga", "Pacifica",
+  "Burlingame", "Millbrae", "Belmont", "Brisbane",
+].sort((a, b) => b.length - a.length);
+
+function injectCityComma(query: string): string | null {
+  if (query.includes(",")) return null;
+  const lower = query.toLowerCase();
+  for (const city of BAY_AREA_CITIES) {
+    const cityLower = city.toLowerCase();
+    const idx = lower.indexOf(cityLower);
+    if (idx <= 0) continue;
+    // Must be preceded by whitespace (not mid-word) and either end the string
+    // or be followed by a space (avoid "Sunnyvalefoo").
+    const before = query[idx - 1];
+    const after = query[idx + city.length];
+    if (!/\s/.test(before)) continue;
+    if (after !== undefined && after !== " " && after !== ",") continue;
+    return `${query.slice(0, idx).trimEnd()}, ${query.slice(idx)}`;
+  }
+  return null;
+}
+
+async function fetchOne(q: string): Promise<Geo | null> {
   const url =
-    `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=` +
-    encodeURIComponent(biased);
+    `https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=us&q=` +
+    encodeURIComponent(q);
   const res = await fetch(url, {
     headers: { "User-Agent": "mv-kids (https://github.com/arpitragarwal/kids-activities)" },
     cache: "no-store",
   });
   if (!res.ok) throw new Error(`Geocoder HTTP ${res.status}`);
-  const arr = (await res.json()) as Array<{
-    lat: string;
-    lon: string;
-    display_name: string;
-  }>;
-  if (arr.length === 0) throw new Error("Address not found");
-  return {
-    lat: Number(arr[0].lat),
-    lng: Number(arr[0].lon),
-    label: arr[0].display_name,
-  };
+  const arr = (await res.json()) as Array<{ lat: string; lon: string; display_name: string; type?: string; class?: string }>;
+  if (arr.length === 0) return null;
+  // Reject results that resolved to just a state/country — that means Nominatim
+  // gave up on the address and matched the suffix we appended.
+  const top = arr[0];
+  if (top.class === "boundary" && (top.type === "administrative" || top.type === "country")) {
+    return null;
+  }
+  return { lat: Number(top.lat), lng: Number(top.lon), label: top.display_name };
+}
+
+function buildVariants(query: string): string[] {
+  const trimmed = query.trim();
+  const hasStateHint =
+    /\b(ca|california)\b/i.test(trimmed) || /,\s*[A-Z]{2}\b/.test(trimmed);
+
+  const variants: string[] = [trimmed];
+
+  const withComma = injectCityComma(trimmed);
+  if (withComma) variants.push(withComma);
+
+  const base = withComma ?? trimmed;
+  if (!hasStateHint) {
+    variants.push(`${base}, CA`);
+  }
+
+  // Last resort for truly bare streets: explicit regional context.
+  if (!hasStateHint && !trimmed.includes(",") && !withComma) {
+    variants.push(`${trimmed}, San Francisco Bay Area, CA`);
+  }
+
+  return [...new Set(variants)];
+}
+
+async function geocode(query: string): Promise<Geo> {
+  const variants = buildVariants(query);
+  for (const v of variants) {
+    const hit = await fetchOne(v);
+    if (hit) return hit;
+  }
+  throw new Error("Address not found");
 }
 
 export async function POST(req: NextRequest) {
@@ -41,14 +100,47 @@ export async function POST(req: NextRequest) {
   const action = String(form.get("action") ?? "save");
   const c = await cookies();
   const redirectUrl = new URL("/", req.url);
+  const wantsJson = req.headers.get("accept")?.includes("application/json") ?? false;
+
+  function fail(message: string, httpStatus = 400) {
+    if (wantsJson) {
+      return NextResponse.json({ error: message }, { status: httpStatus });
+    }
+    redirectUrl.searchParams.set("error", message);
+    return NextResponse.redirect(redirectUrl, 303);
+  }
+
+  function ok(payload: Record<string, unknown>, statusParam: string) {
+    if (wantsJson) {
+      return NextResponse.json({ ok: true, ...payload });
+    }
+    redirectUrl.searchParams.set("status", statusParam);
+    return NextResponse.redirect(redirectUrl, 303);
+  }
+
+  // Preview: geocode only, no cookie writes. Always returns JSON.
+  if (action === "preview") {
+    const address = String(form.get("address") ?? "").trim();
+    if (!address) {
+      return NextResponse.json({ error: "Enter an address to check" }, { status: 400 });
+    }
+    try {
+      const geo = await geocode(address);
+      return NextResponse.json({ ok: true, label: geo.label, lat: geo.lat, lng: geo.lng });
+    } catch (e) {
+      return NextResponse.json(
+        { error: e instanceof Error ? e.message : "Geocoding failed" },
+        { status: 400 },
+      );
+    }
+  }
 
   if (action === "reset") {
     c.delete("ageMonths");
     c.delete("homeLat");
     c.delete("homeLng");
     c.delete("homeLabel");
-    redirectUrl.searchParams.set("status", "reset");
-    return NextResponse.redirect(redirectUrl, 303);
+    return ok({}, "reset");
   }
 
   // Age — preferred form is ageYears + ageExtraMonths; ageMonths kept as a
@@ -61,15 +153,13 @@ export async function POST(req: NextRequest) {
     const y = Number(yearsRaw ?? 0);
     const m = Number(extraRaw ?? 0);
     if (!Number.isFinite(y) || y < 0 || y > 20 || !Number.isFinite(m) || m < 0 || m > 11) {
-      redirectUrl.searchParams.set("error", "Years 0-20, extra months 0-11");
-      return NextResponse.redirect(redirectUrl, 303);
+      return fail("Years 0-20, extra months 0-11");
     }
     ageMonths = Math.round(y) * 12 + Math.round(m);
   } else if (legacyRaw !== null && String(legacyRaw).trim() !== "") {
     const n = Number(legacyRaw);
     if (!Number.isFinite(n) || n < 0 || n > 240) {
-      redirectUrl.searchParams.set("error", "Age must be 0-240 months");
-      return NextResponse.redirect(redirectUrl, 303);
+      return fail("Age must be 0-240 months");
     }
     ageMonths = Math.round(n);
   }
@@ -83,6 +173,7 @@ export async function POST(req: NextRequest) {
 
   // Address — geocode if provided
   const address = String(form.get("address") ?? "").trim();
+  let savedLabel: string | undefined;
   if (address) {
     try {
       const geo = await geocode(address);
@@ -101,15 +192,11 @@ export async function POST(req: NextRequest) {
         sameSite: "lax",
         path: "/",
       });
+      savedLabel = geo.label;
     } catch (e) {
-      redirectUrl.searchParams.set(
-        "error",
-        e instanceof Error ? e.message : "Geocoding failed",
-      );
-      return NextResponse.redirect(redirectUrl, 303);
+      return fail(e instanceof Error ? e.message : "Geocoding failed");
     }
   }
 
-  redirectUrl.searchParams.set("status", "saved");
-  return NextResponse.redirect(redirectUrl, 303);
+  return ok(savedLabel ? { label: savedLabel } : {}, "saved");
 }
