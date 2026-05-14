@@ -7,7 +7,29 @@ export const dynamic = "force-dynamic";
 
 // ─── City/region groupings ────────────────────────────────────────────────
 
+// Ordered north → south down the peninsula, then East Bay last.
 const GROUPS = [
+  {
+    label: "San Francisco",
+    ids: [
+      "sfRec", "sfplLibrary",
+      "sfCoffmanPool", "sfGarfieldPool", "sfHamiltonPool", "sfMlkPool",
+      "sfMissionPool", "sfNorthBeachPool", "sfRossiPool",
+      "randallMuseum", "sfMuseums",
+    ],
+  },
+  {
+    label: "Daly City",
+    ids: ["dalyCityRec", "dalyCityPool"],
+  },
+  {
+    label: "San Mateo",
+    ids: ["sanMateoPublicLibraryKids", "sanMateoPublicLibrary", "sanMateoCountyLibrary", "sanMateoJoinvillePool", "sanMateoKingPool"],
+  },
+  {
+    label: "Palo Alto & Redwood City",
+    ids: ["paloAltoLibrary", "redwoodCityRec"],
+  },
   {
     label: "Mountain View",
     ids: ["cityRec", "library", "parks", "musicTogether", "mvPool", "eaglePool"],
@@ -17,45 +39,28 @@ const GROUPS = [
     ids: ["sunnyvaleRec", "sunnyvaleLibrary"],
   },
   {
-    label: "Santa Clara",
-    ids: ["santaClaraRec", "santaClaraLibrary", "santaClaraGomezPool", "santaClaraWarburtonPool"],
-  },
-  {
     label: "Cupertino",
     ids: ["cupertinoRec", "scclLibrary", "cupertinoBlackberryPool"],
   },
   {
-    label: "San Jose",
-    ids: ["sanJoseRec", "sanJoseLibrary"],
+    label: "Santa Clara",
+    ids: ["santaClaraRec", "santaClaraLibrary", "santaClaraGomezPool", "santaClaraWarburtonPool"],
   },
   {
     label: "Milpitas",
     ids: ["milpitasRec"],
   },
   {
-    label: "Los Gatos & Campbell",
-    ids: ["losGatosLibrary", "campbellPool"],
+    label: "San Jose",
+    ids: ["sanJoseRec", "sanJoseLibrary"],
+  },
+  {
+    label: "Campbell & Los Gatos",
+    ids: ["campbellPool", "losGatosLibrary"],
   },
   {
     label: "Fremont & East Bay",
     ids: ["fremontRec", "alamedaCountyLibrary"],
-  },
-  {
-    label: "Daly City & San Francisco",
-    ids: [
-      "dalyCityRec", "dalyCityPool", "sfRec", "sfplLibrary",
-      "sfCoffmanPool", "sfGarfieldPool", "sfHamiltonPool", "sfMlkPool",
-      "sfMissionPool", "sfNorthBeachPool", "sfRossiPool",
-      "randallMuseum", "sfMuseums",
-    ],
-  },
-  {
-    label: "Palo Alto & Redwood City",
-    ids: ["paloAltoLibrary", "redwoodCityRec"],
-  },
-  {
-    label: "San Mateo",
-    ids: ["sanMateoPublicLibraryKids", "sanMateoPublicLibrary", "sanMateoCountyLibrary", "sanMateoJoinvillePool", "sanMateoKingPool"],
   },
 ];
 
