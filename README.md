@@ -55,6 +55,13 @@ park list, ranks them against weather/age/distance, and refreshes hourly via cro
 | `sfplLibrary` | SF Public Library (28 branches) | Scrapes `sfpl.org/events?field_event_topic_target_id=<id>` for 4 storytime topics; paginates up to 45 days out |
 | `santaClaraLibrary` | Santa Clara City Library | Scrapes server-rendered HTML calendar at `sclibrary.org`; may return 403 on non-Vercel IPs |
 
+### Museums
+
+| Id | Source | Mechanism |
+|----|--------|-----------|
+| `randallMuseum` | Randall Museum (SF) | iCal feed via All-in-One Event Calendar plugin; expands RRULE recurrences into individual instances (Saturday Science, Afternoon Art, Animal Ambassador) |
+| `sfMuseums` | 13 curated SF museums & venues | Hardcoded static evergreen cards (Cal Academy, Exploratorium, CCM, de Young, SFMOMA, Asian Art, Walt Disney, CJM, SF Zoo, Aquarium of the Bay, Conservatory of Flowers, Japanese Tea Garden, Bay Model) |
+
 ### Other
 
 | Id | Source | Mechanism |
@@ -79,6 +86,15 @@ Hardcoded seasonal schedules in `src/lib/sources/pools.ts`. Each pool shows as *
 | `campbellPool` | Campbell Community Center Pool | Jun 16 – Aug 7 2026 |
 | `sanMateoJoinvillePool` | San Mateo Joinville Swim Center | Jun 15 – Aug 8 2026 |
 | `sanMateoKingPool` | San Mateo King Swim Center | Jun 15 – Aug 8 2026 |
+| `sfCoffmanPool` | SF Coffman Aquatic Center | Spring 2026: Apr 21 – Jun 6 |
+| `sfGarfieldPool` | SF Garfield Aquatic Center | Spring 2026: Mar 15 – Jun 4 |
+| `sfHamiltonPool` | SF Hamilton Aquatic Center (with waterslides) | Spring 2026: Mar 17 – Jun 6 |
+| `sfMlkPool` | SF Dr. Martin Luther King Jr. Pool | Spring 2026: Apr 7 – Jun 6 |
+| `sfMissionPool` | SF Mission Community Pool (outdoor) | Spring 2026: May 12 – Jun 6 |
+| `sfNorthBeachPool` | SF North Beach Aquatic Center (warm pool, 86°F) | Spring 2026: Mar 17 – Jun 12 |
+| `sfRossiPool` | SF Rossi Pool | Spring 2026: Mar 15 – Jun 4 |
+
+SF pools run year-round indoor and publish new schedules quarterly as PDFs on each facility page (`sfrecpark.org/{ID}/{Pool}`). When `scheduleEndsAt` passes, the source shows as stale — refresh by downloading the new PDF, parsing rec/family swim slots, and bumping the dates in `pools.ts`.
 
 #### Pools not yet integrated
 
@@ -86,7 +102,8 @@ Hardcoded seasonal schedules in `src/lib/sources/pools.ts`. Each pool shows as *
 |------|------|-------------|---------|
 | Rancho Rinconada Pool | Cupertino | https://ranchopool.org/rec-swim/ | 2026 hours not yet published on site; opens May 9 |
 | Washington Swim Center / Swim Complex | Sunnyvale | https://www.sunnyvale.ca.gov/recreation-and-community/classes-and-activities/aquatics/pools | Drop-in hours not prominently published |
-| Mission Pool | San Francisco | https://sfrecpark.org/facilities/facility/details/Mission-Community-Pool-217 | Rec swim hours only in PDF schedule |
+| Balboa Pool | San Francisco | https://sfrecpark.org/488/Balboa-Pool | Closed for renovations |
+| Sava Pool | San Francisco | https://sfrecpark.org/facilities/facility/details/Sava-Pool-220 | Closed through summer 2026 for repairs |
 | Fair / Camden / Mayfair / Rotary Ryland pools | San Jose | https://www.sanjoseca.gov/your-government/departments-offices/parks-recreation-neighborhood-services/athletics-fitness/swimming-and-pools | Hours buried in ActiveNet registration portal |
 | Red Morton Community Center Pool | Redwood City | https://www.redwoodcity.org/departments/parks-recreation-and-community-services/sports/aquatics | Schedule not prominently published |
 | Rinconada Pool | Palo Alto | https://paloaltoswim.com/pool-schedule/ | Schedule is a PDF download, not HTML |

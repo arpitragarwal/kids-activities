@@ -42,7 +42,12 @@ const GROUPS = [
   },
   {
     label: "Daly City & San Francisco",
-    ids: ["dalyCityRec", "dalyCityPool", "sfRec", "sfplLibrary"],
+    ids: [
+      "dalyCityRec", "dalyCityPool", "sfRec", "sfplLibrary",
+      "sfCoffmanPool", "sfGarfieldPool", "sfHamiltonPool", "sfMlkPool",
+      "sfMissionPool", "sfNorthBeachPool", "sfRossiPool",
+      "randallMuseum", "sfMuseums",
+    ],
   },
   {
     label: "Palo Alto & Redwood City",
@@ -91,6 +96,15 @@ const SHORT_NAME: Record<string, string> = {
   dalyCityPool:               "Giammona Pool",
   sfRec:                      "SF Rec & Parks",
   sfplLibrary:                "SF Public Library",
+  sfCoffmanPool:              "Coffman Pool",
+  sfGarfieldPool:             "Garfield Pool",
+  sfHamiltonPool:             "Hamilton Pool",
+  sfMlkPool:                  "MLK Jr Pool",
+  sfMissionPool:              "Mission Pool",
+  sfNorthBeachPool:           "North Beach Pool",
+  sfRossiPool:                "Rossi Pool",
+  randallMuseum:              "Randall Museum",
+  sfMuseums:                  "SF Museums",
   // Palo Alto & Redwood City
   paloAltoLibrary:            "Palo Alto Library",
   redwoodCityRec:             "Redwood City Rec",

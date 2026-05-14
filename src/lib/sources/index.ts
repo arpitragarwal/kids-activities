@@ -12,6 +12,8 @@ import {
 } from "./cityRec";
 import { santaClaraLibrarySource } from "./santaClaraLibrary";
 import { sfplLibrarySource } from "./sfpl";
+import { randallMuseumSource } from "./randallMuseum";
+import { sfMuseumsSource } from "./sfMuseums";
 import {
   paloAltoLibrarySource, scclLibrarySource,
   sanJoseLibrarySource, alamedaCountyLibrarySource, sanMateoCountyLibrarySource,
@@ -24,6 +26,9 @@ import {
   cupertinoBlackberryPoolSource,
   dalyCityPoolSource, campbellPoolSource,
   sanMateoJoinvillePoolSource, sanMateoKingPoolSource,
+  sfCoffmanPoolSource, sfGarfieldPoolSource, sfHamiltonPoolSource,
+  sfMlkPoolSource, sfMissionPoolSource, sfNorthBeachPoolSource,
+  sfRossiPoolSource,
 } from "./pools";
 
 export const SOURCES: SourceDefinition[] = [
@@ -51,6 +56,9 @@ export const SOURCES: SourceDefinition[] = [
   sanMateoPublicLibrarySource,
   santaClaraLibrarySource,
   sfplLibrarySource,
+  // Museums
+  randallMuseumSource,
+  sfMuseumsSource,
   // Places
   parksSource,
   // Music
@@ -65,6 +73,13 @@ export const SOURCES: SourceDefinition[] = [
   campbellPoolSource,
   sanMateoJoinvillePoolSource,
   sanMateoKingPoolSource,
+  sfCoffmanPoolSource,
+  sfGarfieldPoolSource,
+  sfHamiltonPoolSource,
+  sfMlkPoolSource,
+  sfMissionPoolSource,
+  sfNorthBeachPoolSource,
+  sfRossiPoolSource,
 ];
 
 export interface RefreshOutcome {
