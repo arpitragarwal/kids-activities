@@ -1,4 +1,4 @@
-import type { SourceDefinition, NormalizedEvent } from "../types";
+import type { SourceDefinition, NormalizedEvent, Indoorness } from "../types";
 
 // Pool recreation swim sessions — hardcoded seasonal schedules.
 //
@@ -47,6 +47,8 @@ interface PoolConfig {
    * update the sessions for the new season.
    */
   scheduleEndsAt: Date;
+  /** Defaults to "outdoor" — set "indoor" for year-round indoor pools (most SF pools). */
+  indoorness?: Indoorness;
   sessions: PoolSession[];
 }
 
@@ -80,7 +82,7 @@ function makePoolSource(cfg: PoolConfig): SourceDefinition {
           lng: cfg.lng,
           ageMinMonths: 0,
           ageMaxMonths: 144,
-          indoorness: "outdoor",
+          indoorness: cfg.indoorness ?? "outdoor",
           cost: "paid",
           registration: "walk-in",
           scheduleLabel: label,
@@ -344,5 +346,197 @@ export const sanMateoKingPoolSource = makePoolSource({
       startDate: "2026-06-21", endDate: "2026-08-08",
       days: [0], startTime: "12:00", endTime: "16:00",
     },
+  ],
+});
+
+// ─── San Francisco (SFRP&P) pools ─────────────────────────────────────────
+// All SF public pools publish quarterly schedules as PDFs on their facility pages.
+// Unlike the South Bay summer-only pools, SF pools run year-round indoor (Mission
+// is the only outdoor one). Update each quarter; current schedules end June 6 2026.
+// PDFs: https://sfrecpark.org/482/Swimming-Pools → click each pool → schedule link.
+
+// SF — Coffman Pool (Visitacion Valley)
+// PDF: Coffman_Spring26_Apr21_June6
+// Source: https://sfrecpark.org/489/Coffman-Pool
+export const sfCoffmanPoolSource = makePoolSource({
+  id: "sfCoffmanPool",
+  name: "SF Coffman Pool",
+  location: "Coffman Aquatic Center, 1701 Visitacion Ave, San Francisco",
+  lat: 37.7137, lng: -122.4099,
+  url: "https://sfrecpark.org/489/Coffman-Pool",
+  scheduleEndsAt: new Date("2026-06-07T00:00:00-07:00"),
+  indoorness: "indoor",
+  sessions: [
+    // Tue 2–4 PM (Rec/Family/Senior shared)
+    { title: "Rec/Family Swim", startDate: "2026-04-21", endDate: "2026-06-06", days: [2], startTime: "14:00", endTime: "16:00" },
+    // Wed 1:30–2:30 PM
+    { title: "Rec/Family Swim", startDate: "2026-04-21", endDate: "2026-06-06", days: [3], startTime: "13:30", endTime: "14:30" },
+    // Wed 6–7 PM (shared with lap)
+    { title: "Rec/Family Swim", startDate: "2026-04-21", endDate: "2026-06-06", days: [3], startTime: "18:00", endTime: "19:00" },
+    // Fri 2–3 PM
+    { title: "Rec/Family Swim", startDate: "2026-04-21", endDate: "2026-06-06", days: [5], startTime: "14:00", endTime: "15:00" },
+    // Sat 9–10:30 AM
+    { title: "Rec/Family Swim", startDate: "2026-04-21", endDate: "2026-06-06", days: [6], startTime: "09:00", endTime: "10:30" },
+    // Sat 1–2 PM Parent & Child Family Swim
+    { title: "Parent & Child Family Swim", startDate: "2026-04-21", endDate: "2026-06-06", days: [6], startTime: "13:00", endTime: "14:00" },
+    // Sat 2:30–3:45 PM
+    { title: "Rec/Family Swim", startDate: "2026-04-21", endDate: "2026-06-06", days: [6], startTime: "14:30", endTime: "15:45" },
+  ],
+});
+
+// SF — Garfield Pool (Mission)
+// PDF: Garfield_Spring 2026 Schedule March 15 to June 4
+// Source: https://sfrecpark.org/490/Garfield-Pool
+// Note: closed Mon 5/25 (Memorial Day); 3rd Thursday 11am–2pm for training.
+export const sfGarfieldPoolSource = makePoolSource({
+  id: "sfGarfieldPool",
+  name: "SF Garfield Pool",
+  location: "Garfield Aquatic Center, 1271 Treat Ave, San Francisco",
+  lat: 37.7515, lng: -122.4126,
+  url: "https://sfrecpark.org/490/Garfield-Pool",
+  scheduleEndsAt: new Date("2026-06-05T00:00:00-07:00"),
+  indoorness: "indoor",
+  sessions: [
+    // Sun 12:30–2 PM (small pool rec/family + main lap)
+    { title: "Rec/Family Swim", startDate: "2026-03-15", endDate: "2026-06-04", days: [0], startTime: "12:30", endTime: "14:00" },
+    // Sun 2:30–4:30 PM (main pool rec/family)
+    { title: "Rec/Family Swim", startDate: "2026-03-15", endDate: "2026-06-04", days: [0], startTime: "14:30", endTime: "16:30" },
+    // Mon/Wed 2–3:45 PM
+    { title: "Rec/Family Swim", startDate: "2026-03-15", endDate: "2026-06-04", days: [1, 3], startTime: "14:00", endTime: "15:45" },
+    // Mon 5:15–6:30 PM (small pool only)
+    { title: "Rec/Family Swim", startDate: "2026-03-15", endDate: "2026-06-04", days: [1], startTime: "17:15", endTime: "18:30" },
+    // Tue/Thu 2–3:30 PM
+    { title: "Rec/Family Swim", startDate: "2026-03-15", endDate: "2026-06-04", days: [2, 4], startTime: "14:00", endTime: "15:30" },
+    // Wed 5:15–7 PM
+    { title: "Rec/Family Swim", startDate: "2026-03-15", endDate: "2026-06-04", days: [3], startTime: "17:15", endTime: "19:00" },
+  ],
+});
+
+// SF — Hamilton Pool (Western Addition) — only SF public pool with waterslides
+// PDF: Hamilton Pool _ Spring 2026 Schedule _ March 17 to June 6
+// Source: https://sfrecpark.org/491/Hamilton-Pool
+// Note: pool closed Thu 3/19, 4/16, 5/21 from 11am–2:30pm for training.
+export const sfHamiltonPoolSource = makePoolSource({
+  id: "sfHamiltonPool",
+  name: "SF Hamilton Pool",
+  location: "Hamilton Aquatic Center, 1900 Geary Blvd, San Francisco",
+  lat: 37.7847, lng: -122.4366,
+  url: "https://sfrecpark.org/491/Hamilton-Pool",
+  scheduleEndsAt: new Date("2026-06-07T00:00:00-07:00"),
+  indoorness: "indoor",
+  sessions: [
+    // Tue 1–3 PM
+    { title: "Rec/Family Swim", startDate: "2026-03-17", endDate: "2026-06-06", days: [2], startTime: "13:00", endTime: "15:00" },
+    // Wed/Thu/Fri 1–2:30 PM
+    { title: "Rec/Family Swim", startDate: "2026-03-17", endDate: "2026-06-06", days: [3, 4, 5], startTime: "13:00", endTime: "14:30" },
+    // Fri 6:30–8 PM
+    { title: "Rec/Family Swim", startDate: "2026-03-17", endDate: "2026-06-06", days: [5], startTime: "18:30", endTime: "20:00" },
+    // Sat 1:30–3:30 PM (waterslides may be open — call ahead)
+    { title: "Rec/Family Swim", startDate: "2026-03-17", endDate: "2026-06-06", days: [6], startTime: "13:30", endTime: "15:30" },
+  ],
+});
+
+// SF — Martin Luther King Jr Pool (Bayview)
+// PDF: MLK_Spring26_Apr07_Jun06
+// Source: https://sfrecpark.org/492/Martin-Luther-King-Jr-Pool
+// Note: closed every 3rd Thursday; in-service 4/16, 5/21 11am–3:30pm and 6/6 7am–1pm.
+export const sfMlkPoolSource = makePoolSource({
+  id: "sfMlkPool",
+  name: "SF MLK Jr Pool",
+  location: "Dr. Martin Luther King Jr. Pool, 5701 3rd St, San Francisco",
+  lat: 37.7250, lng: -122.3897,
+  url: "https://sfrecpark.org/492/Martin-Luther-King-Jr-Pool",
+  scheduleEndsAt: new Date("2026-06-07T00:00:00-07:00"),
+  indoorness: "indoor",
+  sessions: [
+    // Tue–Fri 12:30–3:30 PM
+    { title: "Rec/Family Swim", startDate: "2026-04-07", endDate: "2026-06-06", days: [2, 3, 4, 5], startTime: "12:30", endTime: "15:30" },
+    // Sat 1:30–3 PM
+    { title: "Rec/Family Swim", startDate: "2026-04-07", endDate: "2026-06-06", days: [6], startTime: "13:30", endTime: "15:00" },
+  ],
+});
+
+// SF — Mission Community Pool (Mission) — only outdoor SF public pool
+// PDF: Mission_Spring 2026 Schedule May12_June6
+// Source: https://sfrecpark.org/493/Mission-Community-Pool
+// Note: short spring session — outdoor pool, summer schedule will extend through Aug.
+// Closed 5/25 (Memorial Day all day); 5/21 11am–3pm; 6/6 9am–2pm.
+export const sfMissionPoolSource = makePoolSource({
+  id: "sfMissionPool",
+  name: "SF Mission Pool",
+  location: "Mission Aquatic Center, 101 Linda St, San Francisco",
+  lat: 37.7503, lng: -122.4250,
+  url: "https://sfrecpark.org/493/Mission-Community-Pool",
+  scheduleEndsAt: new Date("2026-06-07T00:00:00-07:00"),
+  // outdoor (default)
+  sessions: [
+    // Tue/Thu 9:45–10:45 AM Parent/Child Swim
+    { title: "Parent/Child Swim", startDate: "2026-05-12", endDate: "2026-06-06", days: [2, 4], startTime: "09:45", endTime: "10:45" },
+    // Tue 4–5 PM
+    { title: "Rec/Family Swim", startDate: "2026-05-12", endDate: "2026-06-06", days: [2], startTime: "16:00", endTime: "17:00" },
+    // Wed/Fri 2:30–3:45 PM
+    { title: "Rec/Family Swim", startDate: "2026-05-12", endDate: "2026-06-06", days: [3, 5], startTime: "14:30", endTime: "15:45" },
+    // Thu 3–5 PM
+    { title: "Rec/Family Swim", startDate: "2026-05-12", endDate: "2026-06-06", days: [4], startTime: "15:00", endTime: "17:00" },
+    // Sat 10:45 AM–12 PM
+    { title: "Rec/Family Swim", startDate: "2026-05-12", endDate: "2026-06-06", days: [6], startTime: "10:45", endTime: "12:00" },
+    // Sat 1:30–3 PM
+    { title: "Rec/Family Swim", startDate: "2026-05-12", endDate: "2026-06-06", days: [6], startTime: "13:30", endTime: "15:00" },
+  ],
+});
+
+// SF — North Beach Pool (North Beach) — warm pool 86°F
+// PDF: North Beach Pool_ Spring 2026_ 15MAR to 12JUN
+// Source: https://sfrecpark.org/494/North-Beach-Pool
+// Note: closed 5/25, 6/19 (federal holidays); 6/6 9am–1pm; 3rd Thursday 11am–2pm.
+export const sfNorthBeachPoolSource = makePoolSource({
+  id: "sfNorthBeachPool",
+  name: "SF North Beach Pool",
+  location: "North Beach Aquatic Center, 661 Lombard St, San Francisco",
+  lat: 37.8025, lng: -122.4131,
+  url: "https://sfrecpark.org/494/North-Beach-Pool",
+  scheduleEndsAt: new Date("2026-06-13T00:00:00-07:00"),
+  indoorness: "indoor",
+  sessions: [
+    // Tue 3:30–5 PM
+    { title: "Rec/Family Swim", startDate: "2026-03-17", endDate: "2026-06-12", days: [2], startTime: "15:30", endTime: "17:00" },
+    // Wed 4:15–5:30 PM
+    { title: "Rec/Family Swim", startDate: "2026-03-17", endDate: "2026-06-12", days: [3], startTime: "16:15", endTime: "17:30" },
+    // Wed 5:30–6:30 PM
+    { title: "Rec/Family Swim", startDate: "2026-03-17", endDate: "2026-06-12", days: [3], startTime: "17:30", endTime: "18:30" },
+    // Fri 9–10:15 AM (Rec/Family-Senior shared)
+    { title: "Rec/Family Swim", startDate: "2026-03-17", endDate: "2026-06-12", days: [5], startTime: "09:00", endTime: "10:15" },
+    // Fri 5:30–7 PM
+    { title: "Rec/Family Swim", startDate: "2026-03-17", endDate: "2026-06-12", days: [5], startTime: "17:30", endTime: "19:00" },
+    // Sat 1:45–3 PM
+    { title: "Rec/Family Swim", startDate: "2026-03-17", endDate: "2026-06-12", days: [6], startTime: "13:45", endTime: "15:00" },
+    // Sat 3:30–5 PM
+    { title: "Rec/Family Swim", startDate: "2026-03-17", endDate: "2026-06-12", days: [6], startTime: "15:30", endTime: "17:00" },
+  ],
+});
+
+// SF — Rossi Pool (Inner Richmond)
+// PDF: Rossi_Spring 2026 Schedule March 15 to June 4
+// Source: https://sfrecpark.org/495/Rossi-Pool
+// Note: closed 5/25, 6/19; 3rd Thursday 11am–2pm.
+export const sfRossiPoolSource = makePoolSource({
+  id: "sfRossiPool",
+  name: "SF Rossi Pool",
+  location: "Rossi Pool, 600 Arguello Blvd, San Francisco",
+  lat: 37.7783, lng: -122.4584,
+  url: "https://sfrecpark.org/495/Rossi-Pool",
+  scheduleEndsAt: new Date("2026-06-05T00:00:00-07:00"),
+  indoorness: "indoor",
+  sessions: [
+    // Sun 12:30–2 PM
+    { title: "Rec/Family Swim", startDate: "2026-03-15", endDate: "2026-06-04", days: [0], startTime: "12:30", endTime: "14:00" },
+    // Sun 2:30–3:30 PM
+    { title: "Rec/Family Swim", startDate: "2026-03-15", endDate: "2026-06-04", days: [0], startTime: "14:30", endTime: "15:30" },
+    // Tue 6:15–7:30 PM (Family 2 lanes + Lap 4 lanes)
+    { title: "Family/Lap Swim", startDate: "2026-03-15", endDate: "2026-06-04", days: [2], startTime: "18:15", endTime: "19:30" },
+    // Wed 2–3:30 PM (Family 2 lanes + Lap 4 lanes)
+    { title: "Family/Lap Swim", startDate: "2026-03-15", endDate: "2026-06-04", days: [3], startTime: "14:00", endTime: "15:30" },
+    // Thu 6:15–7:30 PM (Family 3 lanes + Lap 3 lanes)
+    { title: "Family/Lap Swim", startDate: "2026-03-15", endDate: "2026-06-04", days: [4], startTime: "18:15", endTime: "19:30" },
   ],
 });
