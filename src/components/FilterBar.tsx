@@ -39,8 +39,29 @@ interface FilterGroup {
 
 const GROUPS: FilterGroup[] = [
   {
-    key: "location",
-    label: "Location",
+    key: "registration",
+    label: "Registration needed",
+    memberIds: ["dropin", "preregistration"],
+    options: [
+      { id: null,               label: "Any",       test: () => true },
+      { id: "dropin",           label: "Drop-in",   test: (e) => e.registration === "drop-in" || e.registration === "walk-in" },
+      { id: "preregistration",  label: "Required",  test: (e) => e.registration === "required" },
+    ],
+  },
+  {
+    key: "distance",
+    label: "Distance",
+    memberIds: ["walk", "near", "mid"],
+    options: [
+      { id: null,   label: "Any distance", test: () => true },
+      { id: "walk", label: "Walking",      test: (e) => e.distanceMiles === null || e.distanceMiles <= 1 },
+      { id: "near", label: "Within 5mi",   test: (e) => e.distanceMiles === null || e.distanceMiles <= 5 },
+      { id: "mid",  label: "Within 10mi",  test: (e) => e.distanceMiles === null || e.distanceMiles <= 10 },
+    ],
+  },
+  {
+    key: "indoorness",
+    label: "Indoor/Outdoor",
     memberIds: ["indoor", "outdoor"],
     options: [
       { id: null,      label: "Any",     test: () => true },
@@ -59,16 +80,6 @@ const GROUPS: FilterGroup[] = [
     ],
   },
   {
-    key: "registration",
-    label: "Sign-up",
-    memberIds: ["dropin", "preregistration"],
-    options: [
-      { id: null,               label: "Any",       test: () => true },
-      { id: "dropin",           label: "Drop-in",   test: (e) => e.registration === "drop-in" || e.registration === "walk-in" },
-      { id: "preregistration",  label: "Required",  test: (e) => e.registration === "required" },
-    ],
-  },
-  {
     key: "time",
     label: "Time",
     memberIds: ["morning", "midmorning", "afternoon", "lateafternoon", "evening"],
@@ -79,17 +90,6 @@ const GROUPS: FilterGroup[] = [
       { id: "afternoon",     label: "Noon–3pm",  test: (e) => { if (e.evergreen) return true; const h = startHourPacific(e.start_at); return h >= 12 && h < 15; } },
       { id: "lateafternoon", label: "3–6pm",     test: (e) => { if (e.evergreen) return true; const h = startHourPacific(e.start_at); return h >= 15 && h < 18; } },
       { id: "evening",       label: "6pm+",      test: (e) => { if (e.evergreen) return true; const h = startHourPacific(e.start_at); return h >= 18; } },
-    ],
-  },
-  {
-    key: "distance",
-    label: "Distance",
-    memberIds: ["walk", "near", "mid"],
-    options: [
-      { id: null,   label: "Any distance", test: () => true },
-      { id: "walk", label: "Walking",      test: (e) => e.distanceMiles === null || e.distanceMiles <= 1 },
-      { id: "near", label: "Within 5mi",   test: (e) => e.distanceMiles === null || e.distanceMiles <= 5 },
-      { id: "mid",  label: "Within 10mi",  test: (e) => e.distanceMiles === null || e.distanceMiles <= 10 },
     ],
   },
 ];
