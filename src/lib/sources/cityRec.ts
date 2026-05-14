@@ -238,7 +238,13 @@ function makeCityRecSource(cfg: CityRecConfig): SourceDefinition {
             ? "outdoor"
             : "indoor",
           cost,
-          registration: a.allow_drop_in_reg ? "drop-in" : "required",
+          // ActiveNet's `allow_drop_in_reg` is unreliable — it's false even for
+          // titled "Drop-in:" sessions. Rec departments use the title prefix as
+          // the authoritative signal, so check both.
+          registration:
+            a.allow_drop_in_reg || /^\s*drop[\s-]?in\b/i.test(a.name)
+              ? "drop-in"
+              : "required",
           scheduleLabel: labels[i],
           url: a.detail_url,
           evergreen: true,
