@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { COOKIE_MAX_AGE } from "@/lib/userPrefs";
+import { logSettingsChange } from "@/lib/analytics";
 
 export const dynamic = "force-dynamic";
 
@@ -140,6 +141,13 @@ export async function POST(req: NextRequest) {
     c.delete("homeLat");
     c.delete("homeLng");
     c.delete("homeLabel");
+    void logSettingsChange({
+      kind: "reset",
+      ageMonths: null,
+      resolvedLabel: null,
+      lat: null,
+      lng: null,
+    }).catch((err) => console.error("logSettingsChange failed", err));
     return ok({}, "reset");
   }
 
@@ -174,6 +182,8 @@ export async function POST(req: NextRequest) {
   // Address — geocode if provided
   const address = String(form.get("address") ?? "").trim();
   let savedLabel: string | undefined;
+  let savedLat: number | null = null;
+  let savedLng: number | null = null;
   if (address) {
     try {
       const geo = await geocode(address);
@@ -193,9 +203,22 @@ export async function POST(req: NextRequest) {
         path: "/",
       });
       savedLabel = geo.label;
+      savedLat = geo.lat;
+      savedLng = geo.lng;
     } catch (e) {
       return fail(e instanceof Error ? e.message : "Geocoding failed");
     }
+  }
+
+  // Only log if anything actually changed.
+  if (ageMonths !== null || savedLabel) {
+    void logSettingsChange({
+      kind: "save",
+      ageMonths,
+      resolvedLabel: savedLabel ?? null,
+      lat: savedLat,
+      lng: savedLng,
+    }).catch((err) => console.error("logSettingsChange failed", err));
   }
 
   return ok(savedLabel ? { label: savedLabel } : {}, "saved");

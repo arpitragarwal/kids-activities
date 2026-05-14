@@ -6,6 +6,7 @@ import { formatInTimeZone } from "date-fns-tz";
 import type { WeatherSummary } from "@/lib/weather";
 import type { EffectiveConfig } from "@/lib/userPrefs";
 import { splitYearsMonths } from "@/lib/age";
+import { pickCity } from "@/lib/address";
 import { config } from "@/lib/config";
 
 // ─── Icons ────────────────────────────────────────────────────────────────
@@ -25,31 +26,6 @@ function PersonIcon({ size = 14 }: { size?: number } = {}) {
       <path d="M1.5 11c0-2.485 2.015-4.5 4.5-4.5s4.5 2.015 4.5 4.5" strokeLinecap="round" />
     </svg>
   );
-}
-
-// ─── Address helpers ──────────────────────────────────────────────────────
-
-const US_STATE_RE = /^(Alabama|Alaska|Arizona|Arkansas|California|Colorado|Connecticut|Delaware|Florida|Georgia|Hawaii|Idaho|Illinois|Indiana|Iowa|Kansas|Kentucky|Louisiana|Maine|Maryland|Massachusetts|Michigan|Minnesota|Mississippi|Missouri|Montana|Nebraska|Nevada|New Hampshire|New Jersey|New Mexico|New York|North Carolina|North Dakota|Ohio|Oklahoma|Oregon|Pennsylvania|Rhode Island|South Carolina|South Dakota|Tennessee|Texas|Utah|Vermont|Virginia|Washington|West Virginia|Wisconsin|Wyoming|District of Columbia)$/i;
-
-const STREETY_RE = /\b(Avenue|Ave|Street|St|Road|Rd|Boulevard|Blvd|Drive|Dr|Lane|Ln|Way|Court|Ct|Place|Pl|Parkway|Pkwy|Highway|Hwy|Terrace|Ter|Circle|Cir)\.?$/i;
-
-function pickCity(parts: string[]): string {
-  if (parts.length === 0) return "";
-  if (parts.length === 1) return parts[0];
-  // Prefer the part right before "...County" or a US state name.
-  for (let i = 1; i < parts.length; i++) {
-    if (/county$/i.test(parts[i]) || US_STATE_RE.test(parts[i])) {
-      return parts[i - 1];
-    }
-  }
-  // Fallback: first part that doesn't look like a house number or street name.
-  for (let i = 0; i < parts.length; i++) {
-    const p = parts[i];
-    if (/^\d+$/.test(p)) continue;
-    if (STREETY_RE.test(p)) continue;
-    return p;
-  }
-  return parts[parts.length - 1];
 }
 
 // ─── Weather helpers ──────────────────────────────────────────────────────
@@ -105,6 +81,9 @@ function SettingsDrawer({
   const addressChanged = trimmedAddress !== addrDefault.trim();
 
   const inputCls = "rounded-lg border border-stone-200 bg-white px-2.5 py-1.5 text-sm outline-none focus:border-stone-400 transition-colors";
+  // Number variant strips native spinner buttons so the input doesn't lose
+  // visible width to them (Chrome shows spinners on hover/focus, Firefox always).
+  const numInputCls = `${inputCls} [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:m-0 [&::-webkit-outer-spin-button]:m-0`;
 
   async function postSettings(fd: FormData): Promise<{ ok?: true; error?: string; label?: string }> {
     const res = await fetch("/api/settings", {
@@ -186,31 +165,27 @@ function SettingsDrawer({
             <label className="text-[10.5px] font-semibold uppercase tracking-widest text-stone-400">
               Age
             </label>
-            <div className="flex items-center gap-1">
-              <div className="relative">
-                <input
-                  type="number"
-                  min={0}
-                  max={20}
-                  value={ageYears}
-                  onChange={(e) => setAgeYears(e.target.value)}
-                  aria-label="Years"
-                  className={`w-12 pr-4 text-center ${inputCls}`}
-                />
-                <span className="pointer-events-none absolute right-1.5 top-1/2 -translate-y-1/2 text-[10px] text-stone-400">y</span>
-              </div>
-              <div className="relative">
-                <input
-                  type="number"
-                  min={0}
-                  max={11}
-                  value={ageExtraMonths}
-                  onChange={(e) => setAgeExtraMonths(e.target.value)}
-                  aria-label="Months"
-                  className={`w-12 pr-5 text-center ${inputCls}`}
-                />
-                <span className="pointer-events-none absolute right-1.5 top-1/2 -translate-y-1/2 text-[10px] text-stone-400">m</span>
-              </div>
+            <div className="flex items-center gap-1.5">
+              <input
+                type="number"
+                min={0}
+                max={20}
+                value={ageYears}
+                onChange={(e) => setAgeYears(e.target.value)}
+                aria-label="Years"
+                className={`w-12 text-center ${numInputCls}`}
+              />
+              <span className="text-xs text-stone-400">y</span>
+              <input
+                type="number"
+                min={0}
+                max={11}
+                value={ageExtraMonths}
+                onChange={(e) => setAgeExtraMonths(e.target.value)}
+                aria-label="Months"
+                className={`w-12 text-center ${numInputCls}`}
+              />
+              <span className="text-xs text-stone-400">m</span>
             </div>
           </div>
 

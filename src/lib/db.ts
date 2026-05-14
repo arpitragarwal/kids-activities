@@ -61,6 +61,41 @@ export async function ensureSchema(): Promise<void> {
         PRIMARY KEY (lat, lng)
       )
     `;
+    await sql`
+      CREATE TABLE IF NOT EXISTS analytics_sessions (
+        id TEXT PRIMARY KEY,
+        first_seen TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        ua_hash TEXT,
+        country TEXT
+      )
+    `;
+    await sql`
+      CREATE TABLE IF NOT EXISTS analytics_page_views (
+        id BIGSERIAL PRIMARY KEY,
+        session_id TEXT NOT NULL,
+        ts TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        path TEXT NOT NULL,
+        age_months INTEGER,
+        city TEXT,
+        lat_approx DOUBLE PRECISION,
+        lng_approx DOUBLE PRECISION
+      )
+    `;
+    await sql`CREATE INDEX IF NOT EXISTS analytics_page_views_ts_idx ON analytics_page_views (ts)`;
+    await sql`CREATE INDEX IF NOT EXISTS analytics_page_views_session_idx ON analytics_page_views (session_id)`;
+    await sql`
+      CREATE TABLE IF NOT EXISTS analytics_settings_changes (
+        id BIGSERIAL PRIMARY KEY,
+        session_id TEXT NOT NULL,
+        ts TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        kind TEXT NOT NULL,
+        age_months INTEGER,
+        city TEXT,
+        lat_approx DOUBLE PRECISION,
+        lng_approx DOUBLE PRECISION
+      )
+    `;
+    await sql`CREATE INDEX IF NOT EXISTS analytics_settings_changes_ts_idx ON analytics_settings_changes (ts)`;
   })().catch((err) => {
     initPromise = null;
     throw err;

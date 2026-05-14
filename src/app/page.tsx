@@ -7,6 +7,7 @@ import { formatInTimeZone } from "date-fns-tz";
 import { config } from "@/lib/config";
 import { getSourceHealth } from "@/lib/sources";
 import { getEffectiveConfig } from "@/lib/userPrefs";
+import { logPageView } from "@/lib/analytics";
 import { parseScheduleLabel } from "@/lib/schedule";
 import { ContextHeader } from "@/components/ContextHeader";
 import { EventList } from "@/components/EventList";
@@ -45,6 +46,16 @@ function computeTopPicks(events: RankedEvent[]): { topPicks: RankedEvent[]; rest
 export default async function HomePage() {
   const now = new Date();
   const cfg = await getEffectiveConfig();
+
+  // Fire-and-forget analytics log. Never block the render on this.
+  void logPageView({
+    path: "/",
+    ageMonths: cfg.child.ageMonths,
+    homeLat: cfg.home.lat,
+    homeLng: cfg.home.lng,
+    homeLabel: cfg.home.label,
+    homeIsDefault: cfg.home.isDefault,
+  }).catch((err) => console.error("logPageView failed", err));
   // Compute start/end in Pacific time so the week strip aligns with the user's day,
   // not UTC midnight (which is 5 PM Pacific and would show yesterday as "today").
   const todayPacific = formatInTimeZone(now, config.timezone, "yyyy-MM-dd");
