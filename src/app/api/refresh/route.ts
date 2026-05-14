@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { runAllSources, SOURCES } from "@/lib/sources";
-import { refreshWeather } from "@/lib/weather";
+import { refreshAllCachedBuckets } from "@/lib/weather";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -26,13 +26,17 @@ async function handle(req: NextRequest) {
   const started = Date.now();
   // Weather + sources in parallel.
   const [weatherResult, sourceResults] = await Promise.allSettled([
-    refreshWeather(),
+    refreshAllCachedBuckets(),
     runAllSources(),
   ]);
 
-  const weather = weatherResult.status === "fulfilled"
-    ? { ok: true, periods: weatherResult.value.length }
-    : { ok: false, error: String(weatherResult.reason) };
+  const weather =
+    weatherResult.status === "fulfilled"
+      ? {
+          ok: weatherResult.value.every((b) => b.ok),
+          buckets: weatherResult.value,
+        }
+      : { ok: false, error: String(weatherResult.reason) };
 
   const sources =
     sourceResults.status === "fulfilled"

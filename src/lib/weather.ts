@@ -13,11 +13,24 @@ export interface HourlyForecast {
 
 const UA = "mv-kids (github.com/yourname/mv-kids)";
 
-async function fetchNwsHourly(lat: number, lng: number): Promise<HourlyForecast[]> {
+// Bucket coords to ~7mi precision (1 decimal place) so distinct addresses in
+// the same metro share a forecast cache row, keeping NWS call volume bounded.
+function bucketCoords(lat: number, lng: number): { lat: number; lng: number } {
+  return {
+    lat: Math.round(lat * 10) / 10,
+    lng: Math.round(lng * 10) / 10,
+  };
+}
+
+async function fetchNwsHourly(
+  lat: number,
+  lng: number,
+  signal?: AbortSignal,
+): Promise<HourlyForecast[]> {
   // Step 1: resolve gridpoint
   const points = await fetch(
     `https://api.weather.gov/points/${lat.toFixed(4)},${lng.toFixed(4)}`,
-    { headers: { "User-Agent": UA, Accept: "application/geo+json" } },
+    { headers: { "User-Agent": UA, Accept: "application/geo+json" }, signal },
   );
   if (!points.ok) throw new Error(`NWS points ${points.status}`);
   const pointsData = (await points.json()) as {
@@ -27,6 +40,7 @@ async function fetchNwsHourly(lat: number, lng: number): Promise<HourlyForecast[
 
   const hourly = await fetch(hourlyUrl, {
     headers: { "User-Agent": UA, Accept: "application/geo+json" },
+    signal,
   });
   if (!hourly.ok) throw new Error(`NWS hourly ${hourly.status}`);
   const hourlyData = (await hourly.json()) as {
@@ -53,34 +67,96 @@ async function fetchNwsHourly(lat: number, lng: number): Promise<HourlyForecast[
   }));
 }
 
-export async function refreshWeather(): Promise<HourlyForecast[]> {
-  await ensureSchema();
-  const periods = await fetchNwsHourly(config.home.lat, config.home.lng);
+async function writeCache(lat: number, lng: number, periods: HourlyForecast[]): Promise<void> {
   await sql`
     INSERT INTO weather_cache (lat, lng, fetched_at, hourly_json)
-    VALUES (${config.home.lat}, ${config.home.lng}, NOW(), ${JSON.stringify(periods)}::jsonb)
+    VALUES (${lat}, ${lng}, NOW(), ${JSON.stringify(periods)}::jsonb)
     ON CONFLICT (lat, lng) DO UPDATE
       SET fetched_at = EXCLUDED.fetched_at, hourly_json = EXCLUDED.hourly_json
   `;
+}
+
+export async function refreshWeatherFor(lat: number, lng: number): Promise<HourlyForecast[]> {
+  await ensureSchema();
+  const b = bucketCoords(lat, lng);
+  const periods = await fetchNwsHourly(b.lat, b.lng);
+  await writeCache(b.lat, b.lng, periods);
   return periods;
 }
 
-export async function getCachedWeather(): Promise<{
-  fetchedAt: Date | null;
-  periods: HourlyForecast[];
-}> {
+export interface BucketRefreshResult {
+  lat: number;
+  lng: number;
+  ok: boolean;
+  periods?: number;
+  error?: string;
+}
+
+// Cron entry point: refresh every bucket that has ever been cached, plus the
+// default location (so weather is always available for first-time visitors).
+export async function refreshAllCachedBuckets(): Promise<BucketRefreshResult[]> {
   await ensureSchema();
+  const { rows } = (await sql`SELECT lat, lng FROM weather_cache`) as unknown as {
+    rows: { lat: number; lng: number }[];
+  };
+  const buckets = new Map<string, { lat: number; lng: number }>();
+  for (const r of rows) {
+    buckets.set(`${r.lat},${r.lng}`, { lat: r.lat, lng: r.lng });
+  }
+  const def = bucketCoords(config.home.lat, config.home.lng);
+  buckets.set(`${def.lat},${def.lng}`, def);
+
+  const results: BucketRefreshResult[] = [];
+  for (const b of buckets.values()) {
+    try {
+      const periods = await refreshWeatherFor(b.lat, b.lng);
+      results.push({ lat: b.lat, lng: b.lng, ok: true, periods: periods.length });
+    } catch (e) {
+      results.push({
+        lat: b.lat,
+        lng: b.lng,
+        ok: false,
+        error: e instanceof Error ? e.message : String(e),
+      });
+    }
+  }
+  return results;
+}
+
+export async function getWeather(
+  lat: number,
+  lng: number,
+): Promise<{ fetchedAt: Date | null; periods: HourlyForecast[] }> {
+  await ensureSchema();
+  const b = bucketCoords(lat, lng);
   const { rows } = (await sql`
     SELECT fetched_at, hourly_json
     FROM weather_cache
-    WHERE lat = ${config.home.lat} AND lng = ${config.home.lng}
+    WHERE lat = ${b.lat} AND lng = ${b.lng}
     LIMIT 1
   `) as unknown as { rows: { fetched_at: string; hourly_json: HourlyForecast[] }[] };
-  if (rows.length === 0) return { fetchedAt: null, periods: [] };
-  return {
-    fetchedAt: new Date(rows[0].fetched_at),
-    periods: rows[0].hourly_json,
-  };
+  if (rows.length > 0) {
+    return {
+      fetchedAt: new Date(rows[0].fetched_at),
+      periods: rows[0].hourly_json,
+    };
+  }
+
+  // Cache miss — try a quick inline fetch. NWS is US-only, so addresses
+  // outside the US will 404 and we fall through to the empty fallback that
+  // ContextHeader already renders as "Weather not yet fetched".
+  const ac = new AbortController();
+  const timer = setTimeout(() => ac.abort(), 2500);
+  try {
+    const periods = await fetchNwsHourly(b.lat, b.lng, ac.signal);
+    await writeCache(b.lat, b.lng, periods);
+    return { fetchedAt: new Date(), periods };
+  } catch (e) {
+    console.warn(`weather inline fetch failed for ${b.lat},${b.lng}:`, e);
+    return { fetchedAt: null, periods: [] };
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 export interface WeatherSummary {

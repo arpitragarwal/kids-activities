@@ -54,12 +54,20 @@ async function fetchOne(q: string): Promise<Geo | null> {
     cache: "no-store",
   });
   if (!res.ok) throw new Error(`Geocoder HTTP ${res.status}`);
-  const arr = (await res.json()) as Array<{ lat: string; lon: string; display_name: string; type?: string; class?: string }>;
+  const arr = (await res.json()) as Array<{
+    lat: string;
+    lon: string;
+    display_name: string;
+    addresstype?: string;
+  }>;
   if (arr.length === 0) return null;
-  // Reject results that resolved to just a state/country — that means Nominatim
-  // gave up on the address and matched the suffix we appended.
   const top = arr[0];
-  if (top.class === "boundary" && (top.type === "administrative" || top.type === "country")) {
+  // Reject only state- or country-level resolutions — those mean Nominatim
+  // gave up on the specifics (e.g. junk input collapsing to "California" via
+  // the ", CA" suffix we may append). Cities, towns, suburbs, neighborhoods,
+  // streets, and buildings are all acceptable — they're addresstype "city",
+  // "town", "village", "suburb", "road", "building", etc.
+  if (top.addresstype === "state" || top.addresstype === "country") {
     return null;
   }
   return { lat: Number(top.lat), lng: Number(top.lon), label: top.display_name };

@@ -2,12 +2,18 @@
 //   POSTGRES_URL=... npx tsx src/scripts/refreshLocal.ts
 
 import { runAllSources } from "../lib/sources";
-import { refreshWeather } from "../lib/weather";
+import { refreshAllCachedBuckets } from "../lib/weather";
 
 async function main() {
   console.log("Refreshing weather…");
-  const periods = await refreshWeather();
-  console.log(`  ${periods.length} hourly periods cached`);
+  const buckets = await refreshAllCachedBuckets();
+  for (const b of buckets) {
+    if (b.ok) {
+      console.log(`  ✓ ${b.lat},${b.lng}: ${b.periods} hourly periods`);
+    } else {
+      console.log(`  ✗ ${b.lat},${b.lng}: ${b.error}`);
+    }
+  }
 
   console.log("Refreshing sources…");
   const results = await runAllSources();

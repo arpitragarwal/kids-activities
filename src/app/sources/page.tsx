@@ -1,6 +1,7 @@
 import { formatDistanceToNow } from "date-fns";
 import { getSourceHealth } from "@/lib/sources";
-import { getCachedWeather } from "@/lib/weather";
+import { getWeather } from "@/lib/weather";
+import { config } from "@/lib/config";
 import type { SourceHealth } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -206,7 +207,7 @@ function SourceTile({ h }: { h: SourceHealth }) {
 export default async function HealthPage() {
   const [health, { fetchedAt }] = await Promise.all([
     getSourceHealth(),
-    getCachedWeather(),
+    getWeather(config.home.lat, config.home.lng),
   ]);
 
   const byId = new Map(health.map((h) => [h.id, h]));

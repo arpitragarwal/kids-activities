@@ -2,7 +2,7 @@ import { addDays, startOfDay, endOfDay } from "date-fns";
 import { fromZonedTime } from "date-fns-tz";
 import { fetchEventsBetween, rank } from "@/lib/rank";
 import type { RankedEvent } from "@/lib/rank";
-import { getCachedWeather, summarizeForHour } from "@/lib/weather";
+import { getWeather, summarizeForHour } from "@/lib/weather";
 import { formatInTimeZone } from "date-fns-tz";
 import { config } from "@/lib/config";
 import { getSourceHealth } from "@/lib/sources";
@@ -69,7 +69,7 @@ export default async function HomePage() {
   const weekMondayStart = addDays(start, -daysFromMonday);
 
   const [{ periods, fetchedAt }, dbEvents, health] = await Promise.all([
-    getCachedWeather(),
+    getWeather(cfg.home.lat, cfg.home.lng),
     fetchEventsBetween(start, end),
     getSourceHealth(),
   ]);
