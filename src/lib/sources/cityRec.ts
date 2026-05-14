@@ -213,10 +213,20 @@ function makeCityRecSource(cfg: CityRecConfig): SourceDefinition {
         const venue = a.location?.label ?? "";
         const { lat, lng } = coordsForVenue(venue);
         const desc = a.desc.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim().slice(0, 800);
+        // ActiveNet's list-search API doesn't populate search_from_price for
+        // most cities (always null) — the actual price only appears on the
+        // registration detail page. Drop-in family events at rec departments
+        // are almost always free (e.g. SF "Place to Play", MV open gym), so
+        // assume free when price is unknown and the activity is drop-in.
+        // Registered classes default to "paid" as before.
+        const isDropIn =
+          a.allow_drop_in_reg || /^\s*drop[\s-]?in\b/i.test(a.name);
         const cost: string =
           typeof a.search_from_price === "number" && a.search_from_price > 0
             ? `$${a.search_from_price}+`
             : a.search_from_price === 0
+            ? "free"
+            : isDropIn
             ? "free"
             : "paid";
 
