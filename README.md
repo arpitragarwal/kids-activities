@@ -48,13 +48,19 @@ park list, ranks them against weather/age/distance, and refreshes hourly via cro
 | `alamedaCountyLibrary` | Alameda County Library |
 | `sanMateoCountyLibrary` | San Mateo County Library |
 
+### Libraries — Drupal HTML scrape
+
+| Id | Source | Mechanism |
+|----|--------|-----------|
+| `sfplLibrary` | SF Public Library (28 branches) | Scrapes `sfpl.org/events?field_event_topic_target_id=<id>` for 4 storytime topics; paginates up to 45 days out |
+| `santaClaraLibrary` | Santa Clara City Library | Scrapes server-rendered HTML calendar at `sclibrary.org`; may return 403 on non-Vercel IPs |
+
 ### Other
 
 | Id | Source | Mechanism |
 |----|--------|-----------|
 | `parks` | Curated parks & indoor places | Hardcoded list in `src/lib/sources/parks.ts` |
 | `music-together` | Music Together (Bay Area centers) | Scrapes `calendar.aspx` from each center's Main Street Sites page; falls back to evergreen for centers without a calendar |
-| `santaClaraLibrary` | Santa Clara City Library | Scrapes server-rendered HTML calendar at `sclibrary.org`; may return 403 on non-Vercel IPs |
 
 When a source breaks it shows up on `/health` with the last error.
 

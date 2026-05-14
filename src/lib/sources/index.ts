@@ -11,6 +11,7 @@ import {
   sunnyvaleRecSource,
 } from "./cityRec";
 import { santaClaraLibrarySource } from "./santaClaraLibrary";
+import { sfplLibrarySource } from "./sfpl";
 import {
   paloAltoLibrarySource, scclLibrarySource,
   sanJoseLibrarySource, alamedaCountyLibrarySource, sanMateoCountyLibrarySource,
@@ -49,6 +50,7 @@ export const SOURCES: SourceDefinition[] = [
   sanMateoPublicLibraryKidsSource,
   sanMateoPublicLibrarySource,
   santaClaraLibrarySource,
+  sfplLibrarySource,
   // Places
   parksSource,
   // Music

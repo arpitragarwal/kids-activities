@@ -42,7 +42,7 @@ const GROUPS = [
   },
   {
     label: "Daly City & San Francisco",
-    ids: ["dalyCityRec", "dalyCityPool", "sfRec"],
+    ids: ["dalyCityRec", "dalyCityPool", "sfRec", "sfplLibrary"],
   },
   {
     label: "Palo Alto & Redwood City",
@@ -90,6 +90,7 @@ const SHORT_NAME: Record<string, string> = {
   dalyCityRec:                "Daly City Recreation",
   dalyCityPool:               "Giammona Pool",
   sfRec:                      "SF Rec & Parks",
+  sfplLibrary:                "SF Public Library",
   // Palo Alto & Redwood City
   paloAltoLibrary:            "Palo Alto Library",
   redwoodCityRec:             "Redwood City Rec",
