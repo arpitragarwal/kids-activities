@@ -55,6 +55,12 @@ park list, ranks them against weather/age/distance, and refreshes hourly via cro
 | `sfplLibrary` | SF Public Library (28 branches) | Scrapes `sfpl.org/events?field_event_topic_target_id=<id>` for 4 storytime topics; paginates up to 45 days out |
 | `santaClaraLibrary` | Santa Clara City Library | Scrapes server-rendered HTML calendar at `sclibrary.org`; may return 403 on non-Vercel IPs |
 
+### City events — HTML scrape
+
+| Id | Source | Mechanism |
+|----|--------|-----------|
+| `redwoodCityEvents` | City of Redwood City Events | Scrapes the Vision Internet / Granicus calendar at `redwoodcity.org/about-the-city/visiting/city-events-calendar` (same markup as `santaClaraLibrary`); aggregates library, community, and parks events; kid-keyword filter rejects civic meetings, drop-in rec, and adult programming. Also covers Redwood City Library events (Storytime, Kid Makers, Cuentos y Cantos, etc.) since those are published into the city-wide calendar. |
+
 ### Museums
 
 | Id | Source | Mechanism |
@@ -127,7 +133,6 @@ SF pools run year-round indoor and publish new schedules quarterly as PDFs on ea
 | Los Gatos Rec | PerfectMind (`losgatos.perfectmind.com`) | Proprietary SaaS, no public API |
 | Daly City Library | LibCal (`dalycity.libcal.com`) | LibCal instance has 0 events (only an unused "Online Events" calendar) |
 | Menlo Park Library | Granicus CMS | JavaScript-rendered SPA, no structured events feed |
-| Redwood City Library | City CMS | No structured events feed |
 
 ## Running locally
 

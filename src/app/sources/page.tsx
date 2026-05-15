@@ -29,7 +29,7 @@ const GROUPS = [
   },
   {
     label: "Palo Alto & Redwood City",
-    ids: ["paloAltoLibrary", "redwoodCityRec"],
+    ids: ["paloAltoLibrary", "redwoodCityRec", "redwoodCityEvents"],
   },
   {
     label: "Mountain View",
@@ -114,6 +114,7 @@ const SHORT_NAME: Record<string, string> = {
   // Palo Alto & Redwood City
   paloAltoLibrary:            "Palo Alto Library",
   redwoodCityRec:             "Redwood City Rec",
+  redwoodCityEvents:          "Redwood City Events",
   // San Mateo
   sanMateoPublicLibraryKids:  "Public Library (Kids)",
   sanMateoPublicLibrary:      "Public Library",

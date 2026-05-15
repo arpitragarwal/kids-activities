@@ -11,6 +11,7 @@ import {
   sunnyvaleRecSource,
 } from "./cityRec";
 import { santaClaraLibrarySource } from "./santaClaraLibrary";
+import { redwoodCityEventsSource } from "./redwoodCityEvents";
 import { sfplLibrarySource } from "./sfpl";
 import { randallMuseumSource } from "./randallMuseum";
 import { sfMuseumsSource } from "./sfMuseums";
@@ -56,6 +57,8 @@ export const SOURCES: SourceDefinition[] = [
   sanMateoPublicLibrarySource,
   santaClaraLibrarySource,
   sfplLibrarySource,
+  // City events (aggregated library + community + parks)
+  redwoodCityEventsSource,
   // Museums
   randallMuseumSource,
   sfMuseumsSource,
